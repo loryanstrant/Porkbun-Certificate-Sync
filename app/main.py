@@ -17,7 +17,13 @@ logger = logging.getLogger(__name__)
 
 # Initialize Flask app
 app = Flask(__name__)
-app.secret_key = os.environ.get('SECRET_KEY', 'dev-secret-key-change-in-production')
+# Generate a random secret key if not provided in production
+secret_key = os.environ.get('SECRET_KEY')
+if not secret_key:
+    import secrets
+    secret_key = secrets.token_hex(32)
+    logger.warning("No SECRET_KEY environment variable set. Using randomly generated key. Sessions will not persist across restarts.")
+app.secret_key = secret_key
 
 # Initialize configuration and sync
 config = Config()
@@ -40,6 +46,9 @@ def sanitize_error_message(error: Exception) -> str:
     Returns:
         A safe error message string
     """
+    # Maximum length for error messages to prevent exposure
+    MAX_ERROR_LENGTH = 200
+    
     # Only return safe, generic messages in production
     error_str = str(error)
     
@@ -175,9 +184,11 @@ def add_domain():
         return jsonify({"status": "success", "message": f"Domain {domain} added"})
     except ValueError as e:
         # ValueError messages are safe to return as they come from our own code
+        # Maximum length for error messages to prevent exposure
+        MAX_ERROR_LENGTH = 200
         error_msg = str(e)
         # Only return simple error messages, no stack traces
-        if not error_msg or len(error_msg) > 200:
+        if not error_msg or len(error_msg) > MAX_ERROR_LENGTH:
             error_msg = "Invalid domain configuration"
         return jsonify({"error": error_msg}), 400
     except Exception as e:

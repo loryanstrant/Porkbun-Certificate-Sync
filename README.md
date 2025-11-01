@@ -176,6 +176,8 @@ python -m flask --app app.main run --host 0.0.0.0 --port 5000
 - Restrict access to the web interface using a reverse proxy
 - Regularly update certificates and rotate credentials
 - The container runs as root by default; consider using a non-root user in production
+- **Important**: PFX/PKCS12 files are created without password protection by default for compatibility. Ensure the certificate directory has appropriate file permissions (e.g., `chmod 700 certificates`) to protect private keys
+- Set the `SECRET_KEY` environment variable for production deployments to maintain session persistence
 
 ## Troubleshooting
 

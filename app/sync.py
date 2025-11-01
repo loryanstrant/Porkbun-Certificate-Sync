@@ -2,6 +2,7 @@
 Certificate synchronization and scheduling
 """
 import logging
+from datetime import datetime
 from typing import List, Dict
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.cron import CronTrigger
@@ -95,7 +96,6 @@ class CertificateSync:
                         "error": str(e)
                     })
             
-            from datetime import datetime
             self.sync_status["last_sync"] = datetime.now().isoformat()
             self.sync_status["status"] = "completed"
             self.sync_status["results"] = results

@@ -101,12 +101,16 @@ class CertificateManager:
         """
         Convert PEM certificates to PFX/PKCS12 format
         
+        SECURITY NOTE: PFX files are created without password protection by default.
+        This means the private key is not encrypted in the PFX file.
+        Users should secure the certificate directory with appropriate file permissions.
+        
         Args:
             name: Base name for output file
             cert_pem: Certificate in PEM format
             key_pem: Private key in PEM format
             chain_pem: Certificate chain in PEM format
-            password: Password for PFX file (empty by default)
+            password: Password for PFX file (empty by default for compatibility)
             
         Returns:
             Path to PFX file

@@ -26,4 +26,6 @@ ENV FLASK_APP=app.main
 ENV PYTHONUNBUFFERED=1
 
 # Run the application
+# Note: Using 1 worker to ensure scheduler runs once and state is shared
+# For high-load scenarios, consider using a separate scheduler process
 CMD ["gunicorn", "--bind", "0.0.0.0:5000", "--workers", "1", "--timeout", "120", "app.main:app"]
