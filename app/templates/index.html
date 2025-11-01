@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Porkbun Certificate Sync</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🔐 Porkbun Certificate Sync</h1>
+            <p>Manage SSL certificates from Porkbun</p>
+        </header>
+
+        <div class="tabs">
+            <button class="tab-button active" onclick="openTab('settings')">⚙️ Settings</button>
+            <button class="tab-button" onclick="openTab('domains')">🌐 Domains</button>
+            <button class="tab-button" onclick="openTab('sync')">🔄 Sync</button>
+        </div>
+
+        <!-- Settings Tab -->
+        <div id="settings" class="tab-content active">
+            <div class="section">
+                <h2>API Configuration</h2>
+                <form id="api-form">
+                    <div class="form-group">
+                        <label for="api_key">API Key:</label>
+                        <input type="text" id="api_key" name="api_key" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="secret_key">Secret Key:</label>
+                        <input type="password" id="secret_key" name="secret_key" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Save API Credentials</button>
+                </form>
+            </div>
+
+            <div class="section">
+                <h2>Certificate Configuration</h2>
+                <form id="cert-form">
+                    <div class="form-group">
+                        <label for="output_dir">Output Directory:</label>
+                        <input type="text" id="output_dir" name="output_dir" value="/app/certificates">
+                    </div>
+                    <div class="form-group">
+                        <label for="naming_format">Naming Format:</label>
+                        <input type="text" id="naming_format" name="naming_format" value="{domain}" 
+                               placeholder="Use {domain} for domain name">
+                    </div>
+                    <div class="form-group">
+                        <label>Certificate Formats:</label>
+                        <div class="checkbox-group">
+                            <label><input type="checkbox" name="format" value="pem" checked> PEM</label>
+                            <label><input type="checkbox" name="format" value="crt"> CRT</label>
+                            <label><input type="checkbox" name="format" value="key"> KEY</label>
+                            <label><input type="checkbox" name="format" value="pfx"> PFX/PKCS12</label>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Save Certificate Settings</button>
+                </form>
+            </div>
+
+            <div class="section">
+                <h2>Schedule Configuration</h2>
+                <form id="schedule-form">
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" id="schedule_enabled" name="enabled">
+                            Enable Automatic Sync
+                        </label>
+                    </div>
+                    <div class="form-group">
+                        <label for="cron">Cron Schedule:</label>
+                        <input type="text" id="cron" name="cron" value="0 2 * * *" 
+                               placeholder="0 2 * * * (2 AM daily)">
+                        <small>Format: minute hour day month weekday</small>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Save Schedule Settings</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Domains Tab -->
+        <div id="domains" class="tab-content">
+            <div class="section">
+                <h2>Add Domain</h2>
+                <form id="domain-form">
+                    <div class="form-group">
+                        <label for="domain">Domain:</label>
+                        <input type="text" id="domain" name="domain" required placeholder="example.com">
+                    </div>
+                    <div class="form-group">
+                        <label for="custom_name">Custom Name (optional):</label>
+                        <input type="text" id="custom_name" name="custom_name" placeholder="my-cert">
+                    </div>
+                    <div class="form-group">
+                        <label for="alt_names">Alternative Names (optional, comma-separated):</label>
+                        <input type="text" id="alt_names" name="alt_names" placeholder="www.example.com, api.example.com">
+                    </div>
+                    <button type="submit" class="btn btn-primary">Add Domain</button>
+                </form>
+            </div>
+
+            <div class="section">
+                <h2>Configured Domains</h2>
+                <div id="domains-list">
+                    <p class="loading">Loading domains...</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sync Tab -->
+        <div id="sync" class="tab-content">
+            <div class="section">
+                <h2>Manual Sync</h2>
+                <button id="sync-button" class="btn btn-primary btn-large" onclick="triggerSync()">
+                    🔄 Sync All Certificates Now
+                </button>
+            </div>
+
+            <div class="section">
+                <h2>Sync Status</h2>
+                <div id="sync-status">
+                    <p class="loading">Loading status...</p>
+                </div>
+            </div>
+
+            <div class="section">
+                <h2>Last Sync Results</h2>
+                <div id="sync-results">
+                    <p class="loading">No sync results yet</p>
+                </div>
+            </div>
+        </div>
+
+        <footer>
+            <p>Porkbun Certificate Sync | <a href="https://github.com/loryanstrant/Porkbun-Certificate-Sync" target="_blank">GitHub</a></p>
+        </footer>
+    </div>
+
+    <div id="notification" class="notification"></div>
+
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+</html>

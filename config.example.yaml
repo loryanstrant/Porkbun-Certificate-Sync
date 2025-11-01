@@ -1,0 +1,31 @@
+# Example configuration for Porkbun Certificate Sync
+# Copy this file to config/config.yaml and update with your settings
+
+api:
+  api_key: ""
+  secret_key: ""
+
+domains: []
+  # Example:
+  # - domain: "example.com"
+  #   custom_name: "example"
+  #   alt_names:
+  #     - "www.example.com"
+  #     - "api.example.com"
+
+certificates:
+  output_dir: "/app/certificates"
+  naming_format: "{domain}"
+  formats:
+    - pem
+    # - crt
+    # - key
+    # - pfx
+
+schedule:
+  enabled: false
+  cron: "0 2 * * *"  # 2 AM daily
+  # Other examples:
+  # "0 */6 * * *"    # Every 6 hours
+  # "0 0 * * 0"      # Weekly on Sunday
+  # "0 0 1 * *"      # Monthly on the 1st

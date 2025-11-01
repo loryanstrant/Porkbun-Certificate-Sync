@@ -1,0 +1,14 @@
+version: '3.8'
+
+services:
+  porkbun-cert-sync:
+    build: .
+    container_name: porkbun-cert-sync
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./certificates:/app/certificates
+      - ./config:/app/config
+    environment:
+      - CONFIG_PATH=/app/config/config.yaml
+    restart: unless-stopped
