@@ -30,6 +30,27 @@ except Exception as e:
     logger.error(f"Failed to start scheduler: {e}")
 
 
+def sanitize_error_message(error: Exception) -> str:
+    """
+    Sanitize error messages to prevent stack trace exposure.
+    
+    Args:
+        error: The exception to sanitize
+        
+    Returns:
+        A safe error message string
+    """
+    # Only return safe, generic messages in production
+    error_str = str(error)
+    
+    # Don't expose file paths, stack traces, or internal details
+    if '/' in error_str or '\\' in error_str or 'Traceback' in error_str:
+        return "An internal error occurred"
+    
+    # Return the error message if it's safe
+    return error_str if error_str else "An error occurred"
+
+
 @app.route('/')
 def index():
     """Home page"""
@@ -54,7 +75,8 @@ def get_settings():
             "schedule": schedule_config
         })
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        logger.error(f"Failed to get settings: {e}")
+        return jsonify({"error": "Failed to load settings"}), 500
 
 
 @app.route('/api/settings/api', methods=['POST'])
@@ -78,7 +100,7 @@ def update_api_settings():
         return jsonify({"status": "success", "message": "API credentials updated"})
     except Exception as e:
         logger.error(f"Failed to update API settings: {e}")
-        return jsonify({"error": str(e)}), 500
+        return jsonify({"error": "Failed to update API settings"}), 500
 
 
 @app.route('/api/settings/certificates', methods=['POST'])
@@ -100,7 +122,7 @@ def update_certificate_settings():
         return jsonify({"status": "success", "message": "Certificate settings updated"})
     except Exception as e:
         logger.error(f"Failed to update certificate settings: {e}")
-        return jsonify({"error": str(e)}), 500
+        return jsonify({"error": "Failed to update certificate settings"}), 500
 
 
 @app.route('/api/settings/schedule', methods=['POST'])
@@ -122,7 +144,7 @@ def update_schedule_settings():
         return jsonify({"status": "success", "message": "Schedule settings updated"})
     except Exception as e:
         logger.error(f"Failed to update schedule settings: {e}")
-        return jsonify({"error": str(e)}), 500
+        return jsonify({"error": "Failed to update schedule settings"}), 500
 
 
 @app.route('/api/domains', methods=['GET'])
@@ -132,7 +154,8 @@ def get_domains():
         domains = config.get_domains()
         return jsonify({"domains": domains})
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        logger.error(f"Failed to get domains: {e}")
+        return jsonify({"error": "Failed to load domains"}), 500
 
 
 @app.route('/api/domains', methods=['POST'])
@@ -151,10 +174,15 @@ def add_domain():
         
         return jsonify({"status": "success", "message": f"Domain {domain} added"})
     except ValueError as e:
-        return jsonify({"error": str(e)}), 400
+        # ValueError messages are safe to return as they come from our own code
+        error_msg = str(e)
+        # Only return simple error messages, no stack traces
+        if not error_msg or len(error_msg) > 200:
+            error_msg = "Invalid domain configuration"
+        return jsonify({"error": error_msg}), 400
     except Exception as e:
         logger.error(f"Failed to add domain: {e}")
-        return jsonify({"error": str(e)}), 500
+        return jsonify({"error": "Failed to add domain"}), 500
 
 
 @app.route('/api/domains/<domain>', methods=['DELETE'])
@@ -165,7 +193,7 @@ def remove_domain(domain):
         return jsonify({"status": "success", "message": f"Domain {domain} removed"})
     except Exception as e:
         logger.error(f"Failed to remove domain: {e}")
-        return jsonify({"error": str(e)}), 500
+        return jsonify({"error": "Failed to remove domain"}), 500
 
 
 @app.route('/api/sync', methods=['POST'])
@@ -173,10 +201,14 @@ def trigger_sync():
     """Manually trigger certificate sync"""
     try:
         result = cert_sync.sync_all()
+        # Sanitize result to prevent error exposure
+        if result.get("status") == "error" and "error" in result:
+            logger.error(f"Sync error: {result.get('error')}")
+            return jsonify({"status": "error", "error": "Certificate sync failed"}), 500
         return jsonify(result)
     except Exception as e:
         logger.error(f"Sync failed: {e}")
-        return jsonify({"error": str(e)}), 500
+        return jsonify({"error": "Certificate sync failed"}), 500
 
 
 @app.route('/api/sync/status', methods=['GET'])
@@ -186,7 +218,8 @@ def get_sync_status():
         status = cert_sync.get_status()
         return jsonify(status)
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        logger.error(f"Failed to get sync status: {e}")
+        return jsonify({"error": "Failed to get sync status"}), 500
 
 
 @app.route('/health')
