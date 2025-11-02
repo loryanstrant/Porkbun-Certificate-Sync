@@ -28,7 +28,8 @@ class CertificateManager:
     
     def save_certificate(self, domain: str, cert_chain: str, private_key: str, 
                         public_key: str, custom_name: str = None,
-                        formats: List[str] = None) -> Dict[str, str]:
+                        formats: List[str] = None, separator: str = "_",
+                        alt_file_names: List[str] = None) -> Dict[str, str]:
         """
         Save certificate files
         
@@ -39,6 +40,8 @@ class CertificateManager:
             public_key: Public key/certificate (PEM format)
             custom_name: Custom name for files (defaults to domain)
             formats: List of formats to save (pem, crt, key, pfx)
+            separator: Separator for file names (_, -, or .)
+            alt_file_names: Alternative file name variants to save
             
         Returns:
             Dictionary mapping format to file path
@@ -46,50 +49,57 @@ class CertificateManager:
         if formats is None:
             formats = ["pem"]
         
+        if alt_file_names is None:
+            alt_file_names = []
+        
         name = custom_name or domain
         saved_files = {}
         
+        # Build list of all names to save (primary + alternatives)
+        all_names = [name] + alt_file_names
+        
         try:
-            # Always save PEM format components
-            if "pem" in formats:
-                # Save full chain
-                fullchain_path = os.path.join(self.output_dir, f"{name}_fullchain.pem")
-                with open(fullchain_path, 'w') as f:
-                    f.write(cert_chain)
-                saved_files['fullchain'] = fullchain_path
+            for file_name in all_names:
+                # Always save PEM format components
+                if "pem" in formats:
+                    # Save full chain
+                    fullchain_path = os.path.join(self.output_dir, f"{file_name}{separator}fullchain.pem")
+                    with open(fullchain_path, 'w') as f:
+                        f.write(cert_chain)
+                    saved_files[f'{file_name}_fullchain'] = fullchain_path
+                    
+                    # Save private key
+                    key_path = os.path.join(self.output_dir, f"{file_name}{separator}private.key")
+                    with open(key_path, 'w') as f:
+                        f.write(private_key)
+                    saved_files[f'{file_name}_private_key'] = key_path
+                    
+                    # Save certificate
+                    cert_path = os.path.join(self.output_dir, f"{file_name}{separator}cert.pem")
+                    with open(cert_path, 'w') as f:
+                        f.write(public_key)
+                    saved_files[f'{file_name}_certificate'] = cert_path
                 
-                # Save private key
-                key_path = os.path.join(self.output_dir, f"{name}_private.key")
-                with open(key_path, 'w') as f:
-                    f.write(private_key)
-                saved_files['private_key'] = key_path
+                # Save as separate .crt and .key files
+                if "crt" in formats:
+                    crt_path = os.path.join(self.output_dir, f"{file_name}.crt")
+                    with open(crt_path, 'w') as f:
+                        f.write(cert_chain)
+                    saved_files[f'{file_name}_crt'] = crt_path
                 
-                # Save certificate
-                cert_path = os.path.join(self.output_dir, f"{name}_cert.pem")
-                with open(cert_path, 'w') as f:
-                    f.write(public_key)
-                saved_files['certificate'] = cert_path
+                if "key" in formats:
+                    key_path = os.path.join(self.output_dir, f"{file_name}.key")
+                    with open(key_path, 'w') as f:
+                        f.write(private_key)
+                    saved_files[f'{file_name}_key'] = key_path
+                
+                # Convert to PFX/PKCS12 format
+                if "pfx" in formats:
+                    pfx_path = self._convert_to_pfx(file_name, public_key, private_key, cert_chain)
+                    if pfx_path:
+                        saved_files[f'{file_name}_pfx'] = pfx_path
             
-            # Save as separate .crt and .key files
-            if "crt" in formats:
-                crt_path = os.path.join(self.output_dir, f"{name}.crt")
-                with open(crt_path, 'w') as f:
-                    f.write(cert_chain)
-                saved_files['crt'] = crt_path
-            
-            if "key" in formats:
-                key_path = os.path.join(self.output_dir, f"{name}.key")
-                with open(key_path, 'w') as f:
-                    f.write(private_key)
-                saved_files['key'] = key_path
-            
-            # Convert to PFX/PKCS12 format
-            if "pfx" in formats:
-                pfx_path = self._convert_to_pfx(name, public_key, private_key, cert_chain)
-                if pfx_path:
-                    saved_files['pfx'] = pfx_path
-            
-            logger.info(f"Saved certificates for {domain} as {name}")
+            logger.info(f"Saved certificates for {domain} as {name} (with {len(alt_file_names)} alternative names)")
             return saved_files
             
         except Exception as e:

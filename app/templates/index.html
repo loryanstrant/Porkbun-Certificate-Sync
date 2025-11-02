@@ -71,10 +71,85 @@
                         </label>
                     </div>
                     <div class="form-group">
-                        <label for="cron">Cron Schedule:</label>
-                        <input type="text" id="cron" name="cron" value="0 2 * * *" 
-                               placeholder="0 2 * * * (2 AM daily)">
-                        <small>Format: minute hour day month weekday</small>
+                        <label for="frequency">Frequency:</label>
+                        <select id="frequency" name="frequency">
+                            <option value="hourly">Hourly</option>
+                            <option value="daily" selected>Daily</option>
+                            <option value="weekly">Weekly</option>
+                            <option value="specific_days">Specific Days</option>
+                            <option value="monthly">Monthly</option>
+                        </select>
+                    </div>
+                    <div class="form-group" id="day_of_week_group" style="display: none;">
+                        <label for="day_of_week">Day of Week:</label>
+                        <select id="day_of_week" name="day_of_week">
+                            <option value="0">Sunday</option>
+                            <option value="1">Monday</option>
+                            <option value="2">Tuesday</option>
+                            <option value="3">Wednesday</option>
+                            <option value="4">Thursday</option>
+                            <option value="5">Friday</option>
+                            <option value="6">Saturday</option>
+                        </select>
+                    </div>
+                    <div class="form-group" id="specific_days_group" style="display: none;">
+                        <label>Days of Week:</label>
+                        <div class="checkbox-group">
+                            <label><input type="checkbox" name="day" value="0"> Sun</label>
+                            <label><input type="checkbox" name="day" value="1"> Mon</label>
+                            <label><input type="checkbox" name="day" value="2"> Tue</label>
+                            <label><input type="checkbox" name="day" value="3"> Wed</label>
+                            <label><input type="checkbox" name="day" value="4"> Thu</label>
+                            <label><input type="checkbox" name="day" value="5"> Fri</label>
+                            <label><input type="checkbox" name="day" value="6"> Sat</label>
+                        </div>
+                    </div>
+                    <div class="form-group" id="day_of_month_group" style="display: none;">
+                        <label for="day_of_month">Day of Month:</label>
+                        <input type="number" id="day_of_month" name="day_of_month" min="1" max="31" value="1">
+                    </div>
+                    <div class="form-group" id="time_group">
+                        <label>Time:</label>
+                        <div style="display: flex; gap: 10px; align-items: center;">
+                            <select id="hour" name="hour" style="width: 100px;">
+                                <option value="0">00</option>
+                                <option value="1">01</option>
+                                <option value="2" selected>02</option>
+                                <option value="3">03</option>
+                                <option value="4">04</option>
+                                <option value="5">05</option>
+                                <option value="6">06</option>
+                                <option value="7">07</option>
+                                <option value="8">08</option>
+                                <option value="9">09</option>
+                                <option value="10">10</option>
+                                <option value="11">11</option>
+                                <option value="12">12</option>
+                                <option value="13">13</option>
+                                <option value="14">14</option>
+                                <option value="15">15</option>
+                                <option value="16">16</option>
+                                <option value="17">17</option>
+                                <option value="18">18</option>
+                                <option value="19">19</option>
+                                <option value="20">20</option>
+                                <option value="21">21</option>
+                                <option value="22">22</option>
+                                <option value="23">23</option>
+                            </select>
+                            <span>:</span>
+                            <select id="minute" name="minute" style="width: 100px;">
+                                <option value="0" selected>00</option>
+                                <option value="15">15</option>
+                                <option value="30">30</option>
+                                <option value="45">45</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="cron_preview">Cron Expression:</label>
+                        <input type="text" id="cron_preview" readonly style="background: #f0f0f0;">
+                        <small>Preview of the cron schedule</small>
                     </div>
                     <button type="submit" class="btn btn-primary">Save Schedule Settings</button>
                 </form>
@@ -84,21 +159,37 @@
         <!-- Domains Tab -->
         <div id="domains" class="tab-content">
             <div class="section">
-                <h2>Add Domain</h2>
+                <h2 id="domain-form-title">Add Domain</h2>
                 <form id="domain-form">
+                    <input type="hidden" id="edit_mode" value="false">
+                    <input type="hidden" id="original_domain" value="">
                     <div class="form-group">
                         <label for="domain">Domain:</label>
                         <input type="text" id="domain" name="domain" required placeholder="example.com">
                     </div>
                     <div class="form-group">
-                        <label for="custom_name">Custom Name (optional):</label>
+                        <label for="custom_name">Custom Base Name (optional):</label>
                         <input type="text" id="custom_name" name="custom_name" placeholder="my-cert">
+                        <small>Base name used for certificate files (defaults to domain name)</small>
                     </div>
                     <div class="form-group">
-                        <label for="alt_names">Alternative Names (optional, comma-separated):</label>
-                        <input type="text" id="alt_names" name="alt_names" placeholder="www.example.com, api.example.com">
+                        <label for="separator">File Name Separator:</label>
+                        <select id="separator" name="separator">
+                            <option value="_">Underscore (_)</option>
+                            <option value="-">Hyphen (-)</option>
+                            <option value=".">Dot (.)</option>
+                        </select>
+                        <small>Separator used in file names (e.g., domain_cert.pem or domain.cert.pem)</small>
                     </div>
-                    <button type="submit" class="btn btn-primary">Add Domain</button>
+                    <div class="form-group">
+                        <label for="alt_file_names">Alternative File Names (optional, comma-separated):</label>
+                        <input type="text" id="alt_file_names" name="alt_file_names" placeholder="domain, production">
+                        <small>Additional file name variants to save certificates as (e.g., "domain" will save as domain.cert.pem)</small>
+                    </div>
+                    <div style="display: flex; gap: 10px;">
+                        <button type="submit" class="btn btn-primary" id="domain-submit-btn">Add Domain</button>
+                        <button type="button" class="btn" id="cancel-edit-btn" style="display: none; background: #95a5a6; color: white;" onclick="cancelEditDomain()">Cancel</button>
+                    </div>
                 </form>
             </div>
 

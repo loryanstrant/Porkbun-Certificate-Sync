@@ -58,13 +58,140 @@ async function loadSettings() {
         
         // Update schedule settings
         document.getElementById('schedule_enabled').checked = data.schedule.enabled || false;
-        document.getElementById('cron').value = data.schedule.cron || '0 2 * * *';
+        parseCronToUI(data.schedule.cron || '0 2 * * *');
         
     } catch (error) {
         console.error('Failed to load settings:', error);
         showNotification('Failed to load settings: ' + error.message, 'error');
     }
 }
+
+// Parse cron expression to UI elements
+function parseCronToUI(cron) {
+    const parts = cron.split(' ');
+    if (parts.length !== 5) {
+        // Default to daily at 2 AM if invalid
+        document.getElementById('frequency').value = 'daily';
+        document.getElementById('hour').value = '2';
+        document.getElementById('minute').value = '0';
+        updateScheduleUI();
+        updateCronPreview();
+        return;
+    }
+    
+    const [minute, hour, day, month, weekday] = parts;
+    
+    document.getElementById('minute').value = minute;
+    document.getElementById('hour').value = hour;
+    
+    // Determine frequency
+    if (hour === '*' && minute !== '*') {
+        // Hourly
+        document.getElementById('frequency').value = 'hourly';
+    } else if (day === '*' && month === '*' && weekday === '*') {
+        // Daily
+        document.getElementById('frequency').value = 'daily';
+    } else if (day === '*' && month === '*' && weekday !== '*' && !weekday.includes(',')) {
+        // Weekly on specific day
+        document.getElementById('frequency').value = 'weekly';
+        document.getElementById('day_of_week').value = weekday;
+    } else if (day === '*' && month === '*' && weekday !== '*' && weekday.includes(',')) {
+        // Specific days
+        document.getElementById('frequency').value = 'specific_days';
+        const days = weekday.split(',');
+        document.querySelectorAll('input[name="day"]').forEach(checkbox => {
+            checkbox.checked = days.includes(checkbox.value);
+        });
+    } else if (day !== '*' && month === '*' && weekday === '*') {
+        // Monthly
+        document.getElementById('frequency').value = 'monthly';
+        document.getElementById('day_of_month').value = day;
+    } else {
+        // Default to daily
+        document.getElementById('frequency').value = 'daily';
+    }
+    
+    updateScheduleUI();
+    updateCronPreview();
+}
+
+// Update schedule UI based on frequency
+function updateScheduleUI() {
+    const frequency = document.getElementById('frequency').value;
+    
+    // Hide all optional groups
+    document.getElementById('day_of_week_group').style.display = 'none';
+    document.getElementById('specific_days_group').style.display = 'none';
+    document.getElementById('day_of_month_group').style.display = 'none';
+    document.getElementById('time_group').style.display = 'block';
+    
+    // Show relevant groups based on frequency
+    if (frequency === 'hourly') {
+        document.getElementById('time_group').style.display = 'none';
+    } else if (frequency === 'weekly') {
+        document.getElementById('day_of_week_group').style.display = 'block';
+    } else if (frequency === 'specific_days') {
+        document.getElementById('specific_days_group').style.display = 'block';
+    } else if (frequency === 'monthly') {
+        document.getElementById('day_of_month_group').style.display = 'block';
+    }
+}
+
+// Generate cron expression from UI
+function generateCronFromUI() {
+    const frequency = document.getElementById('frequency').value;
+    const minute = document.getElementById('minute').value;
+    const hour = document.getElementById('hour').value;
+    
+    let cron = '';
+    
+    if (frequency === 'hourly') {
+        cron = `${minute} * * * *`;
+    } else if (frequency === 'daily') {
+        cron = `${minute} ${hour} * * *`;
+    } else if (frequency === 'weekly') {
+        const dayOfWeek = document.getElementById('day_of_week').value;
+        cron = `${minute} ${hour} * * ${dayOfWeek}`;
+    } else if (frequency === 'specific_days') {
+        const days = Array.from(document.querySelectorAll('input[name="day"]:checked'))
+            .map(checkbox => checkbox.value)
+            .sort((a, b) => parseInt(a) - parseInt(b))
+            .join(',');
+        cron = days ? `${minute} ${hour} * * ${days}` : `${minute} ${hour} * * *`;
+    } else if (frequency === 'monthly') {
+        const dayOfMonth = document.getElementById('day_of_month').value;
+        cron = `${minute} ${hour} ${dayOfMonth} * *`;
+    }
+    
+    return cron;
+}
+
+// Update cron preview
+function updateCronPreview() {
+    const cron = generateCronFromUI();
+    document.getElementById('cron_preview').value = cron;
+}
+
+// Add event listeners for schedule changes
+document.addEventListener('DOMContentLoaded', () => {
+    document.getElementById('frequency').addEventListener('change', () => {
+        updateScheduleUI();
+        updateCronPreview();
+    });
+    
+    ['minute', 'hour', 'day_of_week', 'day_of_month'].forEach(id => {
+        const element = document.getElementById(id);
+        if (element) {
+            element.addEventListener('change', updateCronPreview);
+        }
+    });
+    
+    document.querySelectorAll('input[name="day"]').forEach(checkbox => {
+        checkbox.addEventListener('change', updateCronPreview);
+    });
+    
+    loadSettings();
+});
 
 // API Form Handler
 document.getElementById('api-form').addEventListener('submit', async (e) => {
@@ -138,10 +265,10 @@ document.getElementById('cert-form').addEventListener('submit', async (e) => {
 document.getElementById('schedule-form').addEventListener('submit', async (e) => {
     e.preventDefault();
     
-    const formData = new FormData(e.target);
+    const cron = generateCronFromUI();
     const data = {
         enabled: document.getElementById('schedule_enabled').checked,
-        cron: formData.get('cron')
+        cron: cron
     };
     
     try {
@@ -170,30 +297,43 @@ document.getElementById('domain-form').addEventListener('submit', async (e) => {
     e.preventDefault();
     
     const formData = new FormData(e.target);
-    const altNamesStr = formData.get('alt_names');
-    const altNames = altNamesStr ? altNamesStr.split(',').map(s => s.trim()).filter(s => s) : [];
+    const editMode = document.getElementById('edit_mode').value === 'true';
+    const originalDomain = document.getElementById('original_domain').value;
+    
+    const altFileNamesStr = formData.get('alt_file_names');
+    const altFileNames = altFileNamesStr ? altFileNamesStr.split(',').map(s => s.trim()).filter(s => s) : [];
     
     const data = {
         domain: formData.get('domain'),
         custom_name: formData.get('custom_name'),
-        alt_names: altNames
+        separator: formData.get('separator'),
+        alt_file_names: altFileNames
     };
     
     try {
-        const response = await fetch('/api/domains', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(data)
-        });
+        let response;
+        if (editMode) {
+            response = await fetch(`/api/domains/${encodeURIComponent(originalDomain)}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+        } else {
+            response = await fetch('/api/domains', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+        }
         
         const result = await response.json();
         
         if (!response.ok) {
-            throw new Error(result.error || 'Failed to add domain');
+            throw new Error(result.error || `Failed to ${editMode ? 'update' : 'add'} domain`);
         }
         
-        showNotification(result.message || 'Domain added successfully');
-        e.target.reset();
+        showNotification(result.message || `Domain ${editMode ? 'updated' : 'added'} successfully`);
+        cancelEditDomain();
         loadDomains();
         
     } catch (error) {
@@ -201,6 +341,40 @@ document.getElementById('domain-form').addEventListener('submit', async (e) => {
         showNotification(error.message, 'error');
     }
 });
+
+// Edit Domain
+function editDomain(domain) {
+    // Scroll to form
+    document.getElementById('domain-form-title').scrollIntoView({ behavior: 'smooth' });
+    
+    // Set edit mode
+    document.getElementById('edit_mode').value = 'true';
+    document.getElementById('original_domain').value = domain.domain;
+    
+    // Populate form
+    document.getElementById('domain').value = domain.domain;
+    document.getElementById('custom_name').value = domain.custom_name || '';
+    document.getElementById('separator').value = domain.separator || '_';
+    document.getElementById('alt_file_names').value = (domain.alt_file_names || []).join(', ');
+    
+    // Update UI
+    document.getElementById('domain-form-title').textContent = 'Edit Domain';
+    document.getElementById('domain-submit-btn').textContent = 'Update Domain';
+    document.getElementById('cancel-edit-btn').style.display = 'inline-block';
+}
+
+// Cancel Edit Domain
+function cancelEditDomain() {
+    // Reset form
+    document.getElementById('domain-form').reset();
+    document.getElementById('edit_mode').value = 'false';
+    document.getElementById('original_domain').value = '';
+    
+    // Update UI
+    document.getElementById('domain-form-title').textContent = 'Add Domain';
+    document.getElementById('domain-submit-btn').textContent = 'Add Domain';
+    document.getElementById('cancel-edit-btn').style.display = 'none';
+}
 
 // Load Domains
 async function loadDomains() {
@@ -223,11 +397,15 @@ async function loadDomains() {
             <div class="domain-item">
                 <div class="domain-info">
                     <h3>${domain.domain}</h3>
-                    <p>Custom name: ${domain.custom_name || domain.domain}</p>
-                    ${domain.alt_names && domain.alt_names.length > 0 ? 
-                        `<p>Alt names: ${domain.alt_names.join(', ')}</p>` : ''}
+                    <p>Base name: ${domain.custom_name || domain.domain}</p>
+                    <p>Separator: ${domain.separator || '_'}</p>
+                    ${domain.alt_file_names && domain.alt_file_names.length > 0 ? 
+                        `<p>Alternative file names: ${domain.alt_file_names.join(', ')}</p>` : ''}
                 </div>
-                <button class="btn btn-danger" onclick="removeDomain('${domain.domain}')">Remove</button>
+                <div style="display: flex; gap: 10px;">
+                    <button class="btn btn-primary" onclick='editDomain(${JSON.stringify(domain)})'>Edit</button>
+                    <button class="btn btn-danger" onclick="removeDomain('${domain.domain}')">Remove</button>
+                </div>
             </div>
         `).join('');
         
@@ -336,11 +514,6 @@ async function loadSyncStatus() {
         showNotification('Failed to load sync status: ' + error.message, 'error');
     }
 }
-
-// Initialize on page load
-document.addEventListener('DOMContentLoaded', () => {
-    loadSettings();
-});
 
 // Auto-refresh sync status when on sync tab
 setInterval(() => {

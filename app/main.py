@@ -174,12 +174,13 @@ def add_domain():
         data = request.json
         domain = data.get('domain', '').strip()
         custom_name = data.get('custom_name', '').strip()
-        alt_names = data.get('alt_names', [])
+        separator = data.get('separator', '_')
+        alt_file_names = data.get('alt_file_names', [])
         
         if not domain:
             return jsonify({"error": "Domain is required"}), 400
         
-        config.add_domain(domain, custom_name or None, alt_names)
+        config.add_domain(domain, custom_name or None, separator, alt_file_names)
         
         return jsonify({"status": "success", "message": f"Domain {domain} added"})
     except ValueError as e:
@@ -194,6 +195,34 @@ def add_domain():
     except Exception as e:
         logger.error(f"Failed to add domain: {e}")
         return jsonify({"error": "Failed to add domain"}), 500
+
+
+@app.route('/api/domains/<domain>', methods=['PUT'])
+def update_domain(domain):
+    """Update an existing domain"""
+    try:
+        data = request.json
+        new_domain = data.get('domain', '').strip()
+        custom_name = data.get('custom_name', '').strip()
+        separator = data.get('separator', '_')
+        alt_file_names = data.get('alt_file_names', [])
+        
+        if not new_domain:
+            return jsonify({"error": "Domain is required"}), 400
+        
+        config.update_domain(domain, new_domain, custom_name or None, separator, alt_file_names)
+        
+        return jsonify({"status": "success", "message": f"Domain {new_domain} updated"})
+    except ValueError as e:
+        # ValueError messages are safe to return as they come from our own code
+        MAX_ERROR_LENGTH = 200
+        error_msg = str(e)
+        if not error_msg or len(error_msg) > MAX_ERROR_LENGTH:
+            error_msg = "Invalid domain configuration"
+        return jsonify({"error": error_msg}), 400
+    except Exception as e:
+        logger.error(f"Failed to update domain: {e}")
+        return jsonify({"error": "Failed to update domain"}), 500
 
 
 @app.route('/api/domains/<domain>', methods=['DELETE'])

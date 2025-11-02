@@ -113,7 +113,9 @@ header p {
 }
 
 .form-group input[type="text"],
-.form-group input[type="password"] {
+.form-group input[type="password"],
+.form-group input[type="number"],
+.form-group select {
     width: 100%;
     padding: 12px;
     border: 2px solid #ddd;
@@ -123,7 +125,9 @@ header p {
 }
 
 .form-group input[type="text"]:focus,
-.form-group input[type="password"]:focus {
+.form-group input[type="password"]:focus,
+.form-group input[type="number"]:focus,
+.form-group select:focus {
     outline: none;
     border-color: #667eea;
 }
