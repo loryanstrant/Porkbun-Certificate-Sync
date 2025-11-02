@@ -447,6 +447,10 @@ body.dark-mode .form-group small {
     color: #a8a8a8;
 }
 
+body.dark-mode .checkbox-group input[type="checkbox"] {
+    accent-color: #4cc9f0;
+}
+
 body.dark-mode .btn-primary {
     background: linear-gradient(135deg, #4cc9f0 0%, #4361ee 100%);
 }
