@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 class PorkbunAPI:
     """Client for interacting with Porkbun API"""
     
-    BASE_URL = "https://porkbun.com/api/json/v3"
+    BASE_URL = "https://api.porkbun.com/api/json/v3"
     
     def __init__(self, api_key: str, secret_key: str):
         """
