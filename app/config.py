@@ -93,7 +93,7 @@ class Config:
         return self.config.get("domains", [])
     
     def add_domain(self, domain: str, custom_name: Optional[str] = None, 
-                   alt_names: Optional[List[str]] = None):
+                   separator: Optional[str] = None, alt_file_names: Optional[List[str]] = None):
         """Add a domain to the configuration"""
         domains = self.config.get("domains", [])
         
@@ -104,10 +104,42 @@ class Config:
         domain_config = {
             "domain": domain,
             "custom_name": custom_name or domain,
-            "alt_names": alt_names or []
+            "separator": separator or "_",
+            "alt_file_names": alt_file_names or []
         }
         
         domains.append(domain_config)
+        self.config["domains"] = domains
+        self.save()
+    
+    def update_domain(self, original_domain: str, domain: str, custom_name: Optional[str] = None,
+                     separator: Optional[str] = None, alt_file_names: Optional[List[str]] = None):
+        """Update a domain in the configuration"""
+        domains = self.config.get("domains", [])
+        
+        # Find the domain to update
+        domain_index = None
+        for i, d in enumerate(domains):
+            if d.get("domain") == original_domain:
+                domain_index = i
+                break
+        
+        if domain_index is None:
+            raise ValueError(f"Domain {original_domain} not found")
+        
+        # If domain name is changing, check for duplicates
+        if original_domain != domain:
+            if any(d.get("domain") == domain for d in domains):
+                raise ValueError(f"Domain {domain} already exists")
+        
+        # Update the domain
+        domains[domain_index] = {
+            "domain": domain,
+            "custom_name": custom_name or domain,
+            "separator": separator or "_",
+            "alt_file_names": alt_file_names or []
+        }
+        
         self.config["domains"] = domains
         self.save()
     

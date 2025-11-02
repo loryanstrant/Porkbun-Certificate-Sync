@@ -65,6 +65,8 @@ class CertificateSync:
             for domain_config in domains:
                 domain = domain_config.get("domain")
                 custom_name = domain_config.get("custom_name", domain)
+                separator = domain_config.get("separator", "_")
+                alt_file_names = domain_config.get("alt_file_names", [])
                 
                 try:
                     logger.info(f"Syncing certificate for {domain}")
@@ -79,7 +81,9 @@ class CertificateSync:
                         private_key,
                         public_key,
                         custom_name,
-                        formats
+                        formats,
+                        separator,
+                        alt_file_names
                     )
                     
                     results.append({

@@ -113,7 +113,9 @@ header p {
 }
 
 .form-group input[type="text"],
-.form-group input[type="password"] {
+.form-group input[type="password"],
+.form-group input[type="number"],
+.form-group select {
     width: 100%;
     padding: 12px;
     border: 2px solid #ddd;
@@ -123,7 +125,9 @@ header p {
 }
 
 .form-group input[type="text"]:focus,
-.form-group input[type="password"]:focus {
+.form-group input[type="password"]:focus,
+.form-group input[type="number"]:focus,
+.form-group select:focus {
     outline: none;
     border-color: #667eea;
 }
@@ -355,4 +359,154 @@ footer a:hover {
         align-items: flex-start;
         gap: 10px;
     }
+}
+
+/* Dark Mode Toggle Button */
+.dark-mode-btn {
+    background: rgba(255, 255, 255, 0.2);
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-radius: 50%;
+    width: 50px;
+    height: 50px;
+    font-size: 1.5em;
+    cursor: pointer;
+    transition: all 0.3s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.dark-mode-btn:hover {
+    background: rgba(255, 255, 255, 0.3);
+    transform: scale(1.1);
+}
+
+/* Dark Mode Styles */
+body.dark-mode {
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+}
+
+body.dark-mode .container {
+    background: #0f3460;
+    color: #e8e8e8;
+}
+
+body.dark-mode header {
+    background: linear-gradient(135deg, #16213e 0%, #0f3460 100%);
+}
+
+body.dark-mode .tabs {
+    background: #1a1a2e;
+    border-bottom: 2px solid #16213e;
+}
+
+body.dark-mode .tab-button {
+    color: #a8a8a8;
+}
+
+body.dark-mode .tab-button:hover {
+    background: #16213e;
+}
+
+body.dark-mode .tab-button.active {
+    background: #0f3460;
+    color: #4cc9f0;
+    border-bottom: 3px solid #4cc9f0;
+}
+
+body.dark-mode .section {
+    background: #16213e;
+    border-left: 4px solid #4cc9f0;
+}
+
+body.dark-mode .section h2 {
+    color: #4cc9f0;
+}
+
+body.dark-mode .form-group label {
+    color: #e8e8e8;
+}
+
+body.dark-mode .form-group input[type="text"],
+body.dark-mode .form-group input[type="password"],
+body.dark-mode .form-group input[type="number"],
+body.dark-mode .form-group select {
+    background: #1a1a2e;
+    border: 2px solid #2d3561;
+    color: #e8e8e8;
+}
+
+body.dark-mode .form-group input[type="text"]:focus,
+body.dark-mode .form-group input[type="password"]:focus,
+body.dark-mode .form-group input[type="number"]:focus,
+body.dark-mode .form-group select:focus {
+    border-color: #4cc9f0;
+}
+
+body.dark-mode .form-group small {
+    color: #a8a8a8;
+}
+
+body.dark-mode .checkbox-group input[type="checkbox"] {
+    accent-color: #4cc9f0;
+}
+
+body.dark-mode .btn-primary {
+    background: linear-gradient(135deg, #4cc9f0 0%, #4361ee 100%);
+}
+
+body.dark-mode .btn-primary:hover {
+    box-shadow: 0 5px 15px rgba(76, 201, 240, 0.4);
+}
+
+body.dark-mode .domain-item {
+    background: #1a1a2e;
+    border: 1px solid #2d3561;
+}
+
+body.dark-mode .domain-info h3 {
+    color: #4cc9f0;
+}
+
+body.dark-mode .domain-info p {
+    color: #a8a8a8;
+}
+
+body.dark-mode .result-item {
+    background: #1a1a2e;
+    border-left: 4px solid #2ecc71;
+}
+
+body.dark-mode .result-item h4 {
+    color: #e8e8e8;
+}
+
+body.dark-mode .result-item p {
+    color: #a8a8a8;
+}
+
+body.dark-mode .result-item ul {
+    color: #a8a8a8;
+}
+
+body.dark-mode footer {
+    background: #1a1a2e;
+    color: #a8a8a8;
+    border-top: 1px solid #2d3561;
+}
+
+body.dark-mode footer a {
+    color: #4cc9f0;
+}
+
+body.dark-mode .loading {
+    color: #a8a8a8;
+}
+
+body.dark-mode .notification.success {
+    background: #27ae60;
+}
+
+body.dark-mode .notification.error {
+    background: #c0392b;
 }
