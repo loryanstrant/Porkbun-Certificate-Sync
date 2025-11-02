@@ -9,8 +9,15 @@
 <body>
     <div class="container">
         <header>
-            <h1>🔐 Porkbun Certificate Sync</h1>
-            <p>Manage SSL certificates from Porkbun</p>
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <h1>🔐 Porkbun Certificate Sync</h1>
+                    <p>Manage SSL certificates from Porkbun</p>
+                </div>
+                <button id="dark-mode-toggle" class="dark-mode-btn" onclick="toggleDarkMode()" aria-label="Toggle dark mode">
+                    <span id="dark-mode-icon">🌙</span>
+                </button>
+            </div>
         </header>
 
         <div class="tabs">

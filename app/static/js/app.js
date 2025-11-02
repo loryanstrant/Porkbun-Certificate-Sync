@@ -522,3 +522,29 @@ setInterval(() => {
         loadSyncStatus();
     }
 }, 5000);
+
+// Dark Mode Toggle
+function toggleDarkMode() {
+    const body = document.body;
+    const icon = document.getElementById('dark-mode-icon');
+    
+    body.classList.toggle('dark-mode');
+    
+    // Update icon
+    if (body.classList.contains('dark-mode')) {
+        icon.textContent = '☀️';
+        localStorage.setItem('darkMode', 'enabled');
+    } else {
+        icon.textContent = '🌙';
+        localStorage.setItem('darkMode', 'disabled');
+    }
+}
+
+// Load dark mode preference on page load
+(function() {
+    const darkMode = localStorage.getItem('darkMode');
+    if (darkMode === 'enabled') {
+        document.body.classList.add('dark-mode');
+        document.getElementById('dark-mode-icon').textContent = '☀️';
+    }
+})();
