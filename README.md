@@ -6,12 +6,39 @@ A Docker container with a web-based management interface for retrieving SSL cert
 
 - 🌐 **Web Interface**: Easy-to-use web UI for managing certificates
 - 🔑 **API Configuration**: Securely store and manage Porkbun API credentials
-- 📦 **Domain Management**: Add and remove domains for certificate retrieval
-- 📝 **Custom Naming**: Define custom naming structures for certificate files
+- 📦 **Domain Management**: Add, edit, and remove domains for certificate retrieval
+- 📝 **Custom Naming**: Define custom naming structures for certificate files with multiple options
+  - Custom base names for certificates
+  - Configurable file name separators (underscore, hyphen, dot)
+  - Alternative file name variants for flexibility
 - 🔄 **Format Conversion**: Support for multiple certificate formats (PEM, CRT, KEY, PFX/PKCS12)
-- ⏰ **Scheduled Sync**: Automatic certificate synchronization on a schedule
+- ⏰ **Human-Friendly Scheduling**: Intuitive schedule configuration with:
+  - Easy-to-use frequency selectors (Hourly, Daily, Weekly, Specific Days, Monthly)
+  - Visual time pickers for hour and minute selection
+  - Real-time cron expression preview
+- 🌓 **Dark Mode**: Toggle between light and dark themes for comfortable viewing
 - 💾 **YAML Configuration**: All settings stored in a YAML configuration file
 - 🐳 **Docker Ready**: Fully containerized with Docker Compose support
+
+## Screenshots
+
+### Light Mode
+<img src="https://github.com/user-attachments/assets/16365430-6de8-472d-93b1-31140f2e24d7" alt="Settings Tab - Light Mode" width="800">
+
+*Settings tab showing API configuration, certificate settings, and the intuitive schedule configuration interface*
+
+<img src="https://github.com/user-attachments/assets/291fce27-4db9-469f-9ffb-3ba2390fee86" alt="Domains Tab - Light Mode" width="800">
+
+*Domains tab with enhanced domain management features including custom naming and file separators*
+
+### Dark Mode
+<img src="https://github.com/user-attachments/assets/37c28b18-d8d1-4da1-bd1d-d3a84d3dabc0" alt="Settings Tab - Dark Mode" width="800">
+
+*Dark mode provides a comfortable viewing experience in low-light environments*
+
+<img src="https://github.com/user-attachments/assets/5fb89d36-64f8-4369-9d07-7de30083e822" alt="Domains Tab - Dark Mode" width="800">
+
+*Domain management interface in dark mode*
 
 ## Quick Start
 
@@ -63,12 +90,20 @@ docker run -d \
 Access the web interface at `http://localhost:5000` to configure:
 
 1. **API Settings**: Enter your Porkbun API key and secret key
-2. **Domains**: Add domains to retrieve certificates for
+2. **Domains**: Add and edit domains to retrieve certificates for
+   - Set custom base names for certificate files
+   - Choose file name separators (underscore, hyphen, or dot)
+   - Define alternative file name variants
+   - Edit existing domain configurations
 3. **Certificate Settings**: 
    - Output directory
    - File naming format (use `{domain}` placeholder)
    - Certificate formats (PEM, CRT, KEY, PFX)
-4. **Schedule**: Configure automatic sync schedule using cron format
+4. **Schedule**: Configure automatic sync schedule with user-friendly options
+   - Select frequency: Hourly, Daily, Weekly, Specific Days, or Monthly
+   - Choose specific time with dropdown menus
+   - Preview the generated cron expression in real-time
+5. **Theme**: Toggle between light and dark mode using the theme button in the header
 
 ### YAML Configuration
 
@@ -81,8 +116,9 @@ api:
 
 domains:
   - domain: "example.com"
-    custom_name: "example"
-    alt_names: []
+    custom_name: "example"  # Optional: custom base name for certificate files
+    separator: "_"  # File name separator: "_", "-", or "."
+    alt_names: []  # Optional: alternative file name variants
 
 certificates:
   output_dir: "/app/certificates"
@@ -94,7 +130,7 @@ certificates:
 
 schedule:
   enabled: true
-  cron: "0 2 * * *"  # 2 AM daily
+  cron: "0 2 * * *"  # 2 AM daily (configured via user-friendly UI)
 ```
 
 ## Certificate Formats
@@ -114,6 +150,7 @@ The application provides a REST API:
 - `POST /api/settings/schedule` - Update schedule settings
 - `GET /api/domains` - List configured domains
 - `POST /api/domains` - Add a new domain
+- `PUT /api/domains/<domain>` - Update an existing domain
 - `DELETE /api/domains/<domain>` - Remove a domain
 - `POST /api/sync` - Manually trigger certificate sync
 - `GET /api/sync/status` - Get sync status
