@@ -240,6 +240,10 @@ chmod 755 certificates config
 
 Contributions are welcome! Please open an issue or submit a pull request.
 
+## Development Approach
+<img width="256" height="256" alt="Vibe Coding with GitHub Copilot 256x256" src="https://github.com/user-attachments/assets/bb41d075-6b3e-4f2b-a88e-94b2022b5d4f" />
+
+
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
