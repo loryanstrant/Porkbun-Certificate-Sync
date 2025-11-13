@@ -36,5 +36,6 @@ ssh_hosts: []
   #   hostname: "prod.example.com"
   #   port: 22
   #   username: "root"
-  #   password_hash: "hashed_password_here"
+  #   password_encrypted: "encrypted_password_here"  # Password is encrypted (not hashed)
   #   cert_path: "/etc/ssl/certs"
+  #   use_sudo: false  # Set to true if sudo is required for file operations

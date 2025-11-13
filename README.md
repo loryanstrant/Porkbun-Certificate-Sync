@@ -14,7 +14,9 @@ A Docker container with a web-based management interface for retrieving SSL cert
 - 🔄 **Format Conversion**: Support for multiple certificate formats (PEM, CRT, KEY, PFX/PKCS12)
 - 🚀 **SSH Distribution**: Automatically distribute certificates to remote servers via SSH
   - Configure multiple remote hosts with friendly display names
-  - Secure password storage with hashing
+  - Secure password storage with encryption
+  - Automatic distribution after successful certificate sync
+  - Sudo support for deploying to protected directories
   - Specify custom certificate paths on remote servers
   - Collapsible host cards for clean interface
   - Alphabetically sorted host list
@@ -170,14 +172,16 @@ ssh_hosts:
     hostname: "prod.example.com"
     port: 22
     username: "root"
-    password_hash: "hashed_password_here"  # Password is securely hashed
+    password_encrypted: "encrypted_password_here"  # Password is securely encrypted
     cert_path: "/etc/ssl/certs"
+    use_sudo: true  # Use sudo for privileged operations
   - display_name: "Staging Server"
     hostname: "staging.example.com"
     port: 22
     username: "deploy"
-    password_hash: "hashed_password_here"
+    password_encrypted: "encrypted_password_here"
     cert_path: "/opt/certificates"
+    use_sudo: false  # No sudo required
 
 schedule:
   enabled: true
@@ -253,6 +257,7 @@ python -m flask --app app.main run --host 0.0.0.0 --port 5000
 - `CONFIG_PATH`: Path to configuration file (default: `/app/config/config.yaml`)
 - `SECRET_KEY`: Flask secret key for session management
 - `FLASK_APP`: Flask application module (default: `app.main`)
+- `ENCRYPTION_KEY`: (Recommended) Encryption key for SSH passwords. If not set, a temporary key is generated on each restart, requiring you to re-enter all SSH passwords. Generate with: `python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"`
 
 ## Volumes
 
@@ -275,11 +280,13 @@ python -m flask --app app.main run --host 0.0.0.0 --port 5000
 
 ### SSH Distribution Security
 
-- **Password Storage**: SSH passwords are hashed using Werkzeug's secure password hashing (scrypt) before storage in the configuration file
+- **Password Storage**: SSH passwords are encrypted using Fernet symmetric encryption before storage in the configuration file. Set the `ENCRYPTION_KEY` environment variable to persist passwords across container restarts.
+- **Sudo Support**: The application supports using `sudo` for privileged operations when deploying certificates to protected directories. This is useful when certificates need to be placed in system directories like `/etc/ssl/certs`.
+- **Automatic Distribution**: After successful certificate sync, certificates are automatically distributed to all configured SSH hosts. This eliminates the need for manual copying and ensures all servers have the latest certificates.
 - **SSH Key Alternative**: For enhanced security, consider using SSH key-based authentication instead of passwords (future enhancement)
 - **Host Key Validation**: The application uses `AutoAddPolicy` to automatically accept SSH host keys for ease of deployment. This accepts unknown host keys without validation, which could be susceptible to man-in-the-middle attacks. For production use, consider implementing SSH key-based authentication with proper known_hosts validation
 - **Network Security**: Ensure SSH access is properly secured on target servers (firewall rules, fail2ban, etc.)
-- **Least Privilege**: Use dedicated service accounts with minimal permissions on remote servers
+- **Least Privilege**: Use dedicated service accounts with minimal permissions on remote servers. Enable `use_sudo` only when necessary.
 - **Audit Logs**: Review distribution logs regularly to monitor certificate deployment activities
 - **Secure Transmission**: SSH connections use standard SSH protocol encryption for secure file transfer
 
