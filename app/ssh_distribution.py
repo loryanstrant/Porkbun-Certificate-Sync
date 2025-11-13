@@ -3,9 +3,12 @@ SSH certificate distribution
 """
 import os
 import logging
+import warnings
 from typing import Dict, List, Optional
 import paramiko
-from werkzeug.security import check_password_hash
+
+# Suppress paramiko deprecation warnings about TripleDES
+warnings.filterwarnings('ignore', category=DeprecationWarning, module='paramiko')
 
 logger = logging.getLogger(__name__)
 
@@ -95,6 +98,7 @@ class SSHDistributor:
         port = host_config.get("port", 22)
         username = host_config.get("username")
         cert_path = host_config.get("cert_path")
+        use_sudo = host_config.get("use_sudo", False)
         
         logger.info(f"Starting distribution to {display_name} ({hostname})")
         
@@ -123,11 +127,15 @@ class SSHDistributor:
             sftp = ssh_client.open_sftp()
             
             # Ensure remote directory exists
-            try:
-                sftp.stat(cert_path)
-            except FileNotFoundError:
-                # Create directory if it doesn't exist
-                self._create_remote_directory(sftp, cert_path)
+            if use_sudo:
+                # When using sudo, we need to create directory via shell command
+                self._create_remote_directory_with_sudo(ssh_client, cert_path, password)
+            else:
+                try:
+                    sftp.stat(cert_path)
+                except FileNotFoundError:
+                    # Create directory if it doesn't exist
+                    self._create_remote_directory(sftp, cert_path)
             
             # Upload each certificate file
             for local_file in certificate_files:
@@ -138,8 +146,38 @@ class SSHDistributor:
                 filename = os.path.basename(local_file)
                 remote_file = os.path.join(cert_path, filename).replace('\\', '/')
                 
-                # Upload file (overwrites if exists)
-                sftp.put(local_file, remote_file)
+                if use_sudo:
+                    # Upload to temp location first, then move with sudo
+                    temp_file = f"/tmp/{filename}"
+                    sftp.put(local_file, temp_file)
+                    
+                    # Move file with sudo
+                    move_cmd = f"sudo mv {temp_file} {remote_file}"
+                    stdin, stdout, stderr = ssh_client.exec_command(move_cmd, get_pty=True)
+                    
+                    # Send password if sudo asks for it
+                    if stdin.channel.send_ready():
+                        stdin.write(password + '\n')
+                        stdin.flush()
+                    
+                    # Wait for command to complete
+                    exit_status = stdout.channel.recv_exit_status()
+                    if exit_status != 0:
+                        error_output = stderr.read().decode()
+                        logger.error(f"Failed to move file with sudo: {error_output}")
+                        continue
+                    
+                    # Set proper permissions with sudo
+                    chmod_cmd = f"sudo chmod 644 {remote_file}"
+                    stdin, stdout, stderr = ssh_client.exec_command(chmod_cmd, get_pty=True)
+                    if stdin.channel.send_ready():
+                        stdin.write(password + '\n')
+                        stdin.flush()
+                    stdout.channel.recv_exit_status()
+                else:
+                    # Upload file directly (overwrites if exists)
+                    sftp.put(local_file, remote_file)
+                
                 distributed_files.append(filename)
                 logger.info(f"Uploaded {filename} to {display_name}:{remote_file}")
             
@@ -200,6 +238,38 @@ class SSHDistributor:
             except FileNotFoundError:
                 sftp.mkdir(directory)
     
+    def _create_remote_directory_with_sudo(self, ssh_client, path: str, password: str):
+        """
+        Create remote directory using sudo
+        
+        Args:
+            ssh_client: SSH client
+            path: Remote directory path
+            password: Password for sudo
+        """
+        # Create directory with sudo
+        mkdir_cmd = f"sudo mkdir -p {path}"
+        stdin, stdout, stderr = ssh_client.exec_command(mkdir_cmd, get_pty=True)
+        
+        # Send password if sudo asks for it
+        if stdin.channel.send_ready():
+            stdin.write(password + '\n')
+            stdin.flush()
+        
+        # Wait for command to complete
+        exit_status = stdout.channel.recv_exit_status()
+        if exit_status != 0:
+            error_output = stderr.read().decode()
+            raise Exception(f"Failed to create directory with sudo: {error_output}")
+        
+        # Set permissions so we can write to it
+        chmod_cmd = f"sudo chmod 755 {path}"
+        stdin, stdout, stderr = ssh_client.exec_command(chmod_cmd, get_pty=True)
+        if stdin.channel.send_ready():
+            stdin.write(password + '\n')
+            stdin.flush()
+        stdout.channel.recv_exit_status()
+    
     def distribute_to_all_hosts(self, certificate_files: List[str]) -> List[Dict]:
         """
         Distribute certificates to all configured hosts
@@ -220,18 +290,23 @@ class SSHDistributor:
         logger.info(f"Distributing certificates to {len(hosts)} hosts")
         
         for host in hosts:
-            # Since we can't decrypt stored passwords, we need a different approach
-            # Option 1: Skip distribution if password not provided
-            # Option 2: Store passwords in plain text (security risk)
-            # Option 3: Use SSH keys instead (better security)
+            display_name = host.get("display_name")
             
-            # For now, we'll return an error indicating password is needed
-            result = {
-                "host": host.get("display_name"),
-                "status": "error",
-                "error": "Password required for distribution - use manual distribution with password"
-            }
+            # Get decrypted password
+            password = self.ssh_config.get_decrypted_password(display_name)
+            
+            if not password:
+                logger.error(f"Could not retrieve password for {display_name}")
+                result = {
+                    "host": display_name,
+                    "status": "error",
+                    "error": "Could not decrypt password - encryption key may have changed"
+                }
+                results.append(result)
+                continue
+            
+            # Distribute to this host
+            result = self.distribute_to_host_with_password(host, password, certificate_files)
             results.append(result)
-            logger.warning(f"Skipped {host.get('display_name')}: password required")
         
         return results
