@@ -314,8 +314,12 @@ def add_ssh_host():
         
         return jsonify({"status": "success", "message": f"SSH host {display_name} added"})
     except ValueError as e:
-        # ValueError messages are safe to return as they come from our own validation
-        error_msg = sanitize_error_message(e)
+        # ValueError messages come from our own validation code
+        # Sanitize to ensure no stack traces are exposed
+        error_msg = str(e)
+        # Limit length and check for sensitive content
+        if len(error_msg) > 200 or '/' in error_msg or '\\' in error_msg:
+            error_msg = "Invalid SSH host configuration"
         return jsonify({"error": error_msg}), 400
     except Exception as e:
         logger.error(f"Failed to add SSH host: {e}")
@@ -351,8 +355,12 @@ def update_ssh_host(display_name):
         
         return jsonify({"status": "success", "message": f"SSH host {new_display_name} updated"})
     except ValueError as e:
-        # ValueError messages are safe to return as they come from our own validation
-        error_msg = sanitize_error_message(e)
+        # ValueError messages come from our own validation code
+        # Sanitize to ensure no stack traces are exposed
+        error_msg = str(e)
+        # Limit length and check for sensitive content
+        if len(error_msg) > 200 or '/' in error_msg or '\\' in error_msg:
+            error_msg = "Invalid SSH host configuration"
         return jsonify({"error": error_msg}), 400
     except Exception as e:
         logger.error(f"Failed to update SSH host: {e}")
