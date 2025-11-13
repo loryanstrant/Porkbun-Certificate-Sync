@@ -131,7 +131,22 @@ class SSHDistributor:
                     sftp.stat(cert_path)
                 except FileNotFoundError:
                     # Create directory if it doesn't exist
-                    self._create_remote_directory(sftp, cert_path)
+                    try:
+                        self._create_remote_directory(sftp, cert_path)
+                    except (PermissionError, IOError) as e:
+                        if "Permission denied" in str(e):
+                            raise PermissionError(
+                                f"Permission denied accessing {cert_path}. "
+                                f"Try setting 'use_sudo: true' in the SSH host configuration for {display_name}."
+                            )
+                        raise
+                except (PermissionError, IOError) as e:
+                    if "Permission denied" in str(e):
+                        raise PermissionError(
+                            f"Permission denied accessing {cert_path}. "
+                            f"Try setting 'use_sudo: true' in the SSH host configuration for {display_name}."
+                        )
+                    raise
             
             # Upload each certificate file
             for local_file in certificate_files:
@@ -172,7 +187,15 @@ class SSHDistributor:
                     stdout.channel.recv_exit_status()
                 else:
                     # Upload file directly (overwrites if exists)
-                    sftp.put(local_file, remote_file)
+                    try:
+                        sftp.put(local_file, remote_file)
+                    except (PermissionError, IOError) as e:
+                        if "Permission denied" in str(e):
+                            raise PermissionError(
+                                f"Permission denied writing to {remote_file}. "
+                                f"Try setting 'use_sudo: true' in the SSH host configuration for {display_name}."
+                            )
+                        raise
                 
                 distributed_files.append(filename)
                 logger.info(f"Uploaded {filename} to {display_name}:{remote_file}")
