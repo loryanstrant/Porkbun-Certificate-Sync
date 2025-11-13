@@ -2,6 +2,7 @@
 SSH certificate distribution
 """
 import os
+import errno
 import logging
 from typing import Dict, List, Optional
 import paramiko
@@ -20,6 +21,22 @@ class SSHDistributor:
             ssh_config: SSH configuration manager instance
         """
         self.ssh_config = ssh_config
+    
+    def _is_permission_error(self, exception: Exception) -> bool:
+        """
+        Check if an exception is a permission denied error
+        
+        Args:
+            exception: Exception to check
+            
+        Returns:
+            True if the exception is a permission error
+        """
+        # Check errno attribute if available
+        if hasattr(exception, 'errno') and exception.errno == errno.EACCES:
+            return True
+        # Fallback to string matching for cases where errno might not be set correctly
+        return "Permission denied" in str(exception)
     
     def distribute_to_host(self, host_config: Dict, certificate_files: List[str]) -> Dict:
         """
@@ -131,7 +148,22 @@ class SSHDistributor:
                     sftp.stat(cert_path)
                 except FileNotFoundError:
                     # Create directory if it doesn't exist
-                    self._create_remote_directory(sftp, cert_path)
+                    try:
+                        self._create_remote_directory(sftp, cert_path)
+                    except (PermissionError, IOError, OSError) as e:
+                        if self._is_permission_error(e):
+                            raise PermissionError(
+                                f"Permission denied accessing {cert_path}. "
+                                f"Try setting 'use_sudo: true' in the SSH host configuration for {display_name}."
+                            )
+                        raise
+                except (PermissionError, IOError, OSError) as e:
+                    if self._is_permission_error(e):
+                        raise PermissionError(
+                            f"Permission denied accessing {cert_path}. "
+                            f"Try setting 'use_sudo: true' in the SSH host configuration for {display_name}."
+                        )
+                    raise
             
             # Upload each certificate file
             for local_file in certificate_files:
@@ -172,7 +204,15 @@ class SSHDistributor:
                     stdout.channel.recv_exit_status()
                 else:
                     # Upload file directly (overwrites if exists)
-                    sftp.put(local_file, remote_file)
+                    try:
+                        sftp.put(local_file, remote_file)
+                    except (PermissionError, IOError, OSError) as e:
+                        if self._is_permission_error(e):
+                            raise PermissionError(
+                                f"Permission denied writing to {remote_file}. "
+                                f"Try setting 'use_sudo: true' in the SSH host configuration for {display_name}."
+                            )
+                        raise
                 
                 distributed_files.append(filename)
                 logger.info(f"Uploaded {filename} to {display_name}:{remote_file}")
