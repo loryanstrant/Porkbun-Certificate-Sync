@@ -273,12 +273,13 @@ def get_ssh_hosts():
     """Get list of SSH hosts"""
     try:
         hosts = cert_sync.ssh_config.get_ssh_hosts()
-        # Remove password hashes from response
+        # Remove password fields from response
         safe_hosts = []
         for host in hosts:
             safe_host = host.copy()
             safe_host.pop('password_hash', None)
-            safe_host['has_password'] = bool(host.get('password_hash'))
+            safe_host.pop('password_encrypted', None)
+            safe_host['has_password'] = bool(host.get('password_encrypted') or host.get('password_hash'))
             safe_hosts.append(safe_host)
         return jsonify({"hosts": safe_hosts})
     except Exception as e:
@@ -297,6 +298,7 @@ def add_ssh_host():
         username = data.get('username', '').strip()
         password = data.get('password', '')
         cert_path = data.get('cert_path', '').strip()
+        use_sudo = data.get('use_sudo', False)
         
         if not all([display_name, hostname, username, password, cert_path]):
             return jsonify({"error": "All fields are required"}), 400
@@ -309,7 +311,7 @@ def add_ssh_host():
             return jsonify({"error": "Invalid port number"}), 400
         
         cert_sync.ssh_config.add_ssh_host(
-            display_name, hostname, port, username, password, cert_path
+            display_name, hostname, port, username, password, cert_path, use_sudo
         )
         
         return jsonify({"status": "success", "message": f"SSH host {display_name} added"})
@@ -337,6 +339,7 @@ def update_ssh_host(display_name):
         username = data.get('username', '').strip()
         password = data.get('password', '')  # Optional - if empty, keep existing
         cert_path = data.get('cert_path', '').strip()
+        use_sudo = data.get('use_sudo')  # Optional - if None, keep existing
         
         if not all([new_display_name, hostname, username, cert_path]):
             return jsonify({"error": "Display name, hostname, username, and cert path are required"}), 400
@@ -350,7 +353,7 @@ def update_ssh_host(display_name):
         
         cert_sync.ssh_config.update_ssh_host(
             display_name, new_display_name, hostname, port, username, 
-            password if password else None, cert_path
+            password if password else None, cert_path, use_sudo
         )
         
         return jsonify({"status": "success", "message": f"SSH host {new_display_name} updated"})
@@ -405,17 +408,23 @@ def test_ssh_connection():
         display_name = data.get('display_name')
         password = data.get('password')
         
-        if not display_name or not password:
-            return jsonify({"error": "Display name and password are required"}), 400
+        if not display_name:
+            return jsonify({"error": "Display name is required"}), 400
         
         host_config = cert_sync.ssh_config.get_ssh_host(display_name)
         if not host_config:
             return jsonify({"error": "SSH host not found"}), 404
         
-        # Verify password
-        from werkzeug.security import check_password_hash
-        if not check_password_hash(host_config.get('password_hash'), password):
-            return jsonify({"error": "Invalid password"}), 401
+        # If password is provided, verify it, otherwise try to use stored password
+        if password:
+            if not cert_sync.ssh_config.verify_password(display_name, password):
+                return jsonify({"error": "Invalid password"}), 401
+            test_password = password
+        else:
+            # Try to use stored password
+            test_password = cert_sync.ssh_config.get_decrypted_password(display_name)
+            if not test_password:
+                return jsonify({"error": "Password required"}), 400
         
         # Test connection
         import paramiko
@@ -430,7 +439,7 @@ def test_ssh_connection():
                 hostname=host_config.get('hostname'),
                 port=host_config.get('port', 22),
                 username=host_config.get('username'),
-                password=password,
+                password=test_password,
                 timeout=10
             )
             ssh_client.close()

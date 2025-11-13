@@ -122,6 +122,28 @@ class CertificateSync:
                 results=results
             )
             
+            # If any certificates were successfully synced, distribute them to SSH hosts
+            if successful_count > 0:
+                logger.info("Starting certificate distribution to SSH hosts")
+                
+                # Collect all successfully saved certificate files
+                certificate_files = []
+                for result in results:
+                    if result['status'] == 'success' and 'files' in result:
+                        certificate_files.extend(result['files'])
+                
+                if certificate_files:
+                    # Distribute certificates to all configured SSH hosts
+                    distribution_results = self.ssh_distributor.distribute_to_all_hosts(certificate_files)
+                    
+                    # Log distribution results
+                    if distribution_results:
+                        self.distribution_log.add_bulk_distribution_event(distribution_results)
+                        
+                        dist_success = len([r for r in distribution_results if r['status'] == 'success'])
+                        dist_failed = len([r for r in distribution_results if r['status'] == 'error'])
+                        logger.info(f"Distribution completed. {dist_success} succeeded, {dist_failed} failed")
+            
             return {
                 "status": "success",
                 "results": results

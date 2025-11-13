@@ -3,7 +3,7 @@ SSH host configuration management
 """
 import logging
 from typing import Dict, List, Optional
-from werkzeug.security import generate_password_hash, check_password_hash
+from .password_encryption import get_password_encryption
 
 logger = logging.getLogger(__name__)
 
@@ -32,7 +32,7 @@ class SSHConfig:
         return sorted(hosts, key=lambda x: x.get("display_name", "").lower())
     
     def add_ssh_host(self, display_name: str, hostname: str, port: int, 
-                     username: str, password: str, cert_path: str):
+                     username: str, password: str, cert_path: str, use_sudo: bool = False):
         """
         Add an SSH host to the configuration
         
@@ -41,8 +41,9 @@ class SSHConfig:
             hostname: Hostname or IP address
             port: SSH port
             username: SSH username
-            password: SSH password (will be hashed)
+            password: SSH password (will be encrypted)
             cert_path: Path where certificates should be stored on remote host
+            use_sudo: Whether to use sudo for file operations on remote host
         """
         hosts = self.config.config.get("ssh_hosts", [])
         
@@ -50,16 +51,18 @@ class SSHConfig:
         if any(h.get("display_name") == display_name for h in hosts):
             raise ValueError(f"Display name '{display_name}' already exists")
         
-        # Hash the password
-        password_hash = generate_password_hash(password)
+        # Encrypt the password
+        password_enc = get_password_encryption()
+        encrypted_password = password_enc.encrypt_password(password)
         
         host_config = {
             "display_name": display_name,
             "hostname": hostname,
             "port": port,
             "username": username,
-            "password_hash": password_hash,
-            "cert_path": cert_path
+            "password_encrypted": encrypted_password,
+            "cert_path": cert_path,
+            "use_sudo": use_sudo
         }
         
         hosts.append(host_config)
@@ -69,7 +72,7 @@ class SSHConfig:
     
     def update_ssh_host(self, original_display_name: str, display_name: str, 
                        hostname: str, port: int, username: str, 
-                       password: Optional[str], cert_path: str):
+                       password: Optional[str], cert_path: str, use_sudo: Optional[bool] = None):
         """
         Update an SSH host in the configuration
         
@@ -79,8 +82,9 @@ class SSHConfig:
             hostname: Hostname or IP address
             port: SSH port
             username: SSH username
-            password: SSH password (will be hashed). If None, keeps existing password
+            password: SSH password (will be encrypted). If None, keeps existing password
             cert_path: Path where certificates should be stored on remote host
+            use_sudo: Whether to use sudo for file operations. If None, keeps existing setting
         """
         hosts = self.config.config.get("ssh_hosts", [])
         
@@ -108,11 +112,19 @@ class SSHConfig:
             "cert_path": cert_path
         }
         
-        # Keep existing password hash if no new password provided
+        # Keep existing password if no new password provided
         if password:
-            host_config["password_hash"] = generate_password_hash(password)
+            password_enc = get_password_encryption()
+            host_config["password_encrypted"] = password_enc.encrypt_password(password)
         else:
-            host_config["password_hash"] = hosts[host_index].get("password_hash")
+            # Try to get encrypted password, fall back to old password_hash field
+            host_config["password_encrypted"] = hosts[host_index].get("password_encrypted", hosts[host_index].get("password_hash", ""))
+        
+        # Keep existing use_sudo setting if not provided
+        if use_sudo is not None:
+            host_config["use_sudo"] = use_sudo
+        else:
+            host_config["use_sudo"] = hosts[host_index].get("use_sudo", False)
         
         hosts[host_index] = host_config
         self.config.config["ssh_hosts"] = hosts
@@ -149,7 +161,7 @@ class SSHConfig:
     
     def verify_password(self, display_name: str, password: str) -> bool:
         """
-        Verify a password against stored hash
+        Verify a password against stored encrypted password
         
         Args:
             display_name: Display name of the host
@@ -162,8 +174,38 @@ class SSHConfig:
         if not host:
             return False
         
-        password_hash = host.get("password_hash")
-        if not password_hash:
+        encrypted_password = host.get("password_encrypted")
+        if not encrypted_password:
             return False
         
-        return check_password_hash(password_hash, password)
+        try:
+            password_enc = get_password_encryption()
+            decrypted = password_enc.decrypt_password(encrypted_password)
+            return decrypted == password
+        except Exception:
+            return False
+    
+    def get_decrypted_password(self, display_name: str) -> Optional[str]:
+        """
+        Get decrypted password for a host
+        
+        Args:
+            display_name: Display name of the host
+            
+        Returns:
+            Decrypted password or None if not found
+        """
+        host = self.get_ssh_host(display_name)
+        if not host:
+            return None
+        
+        encrypted_password = host.get("password_encrypted")
+        if not encrypted_password:
+            return None
+        
+        try:
+            password_enc = get_password_encryption()
+            return password_enc.decrypt_password(encrypted_password)
+        except Exception as e:
+            logger.error(f"Failed to decrypt password for {display_name}: {e}")
+            return None
