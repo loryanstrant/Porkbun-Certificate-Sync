@@ -12,6 +12,17 @@ A Docker container with a web-based management interface for retrieving SSL cert
   - Configurable file name separators (underscore, hyphen, dot)
   - Alternative file name variants for flexibility
 - 🔄 **Format Conversion**: Support for multiple certificate formats (PEM, CRT, KEY, PFX/PKCS12)
+- 🚀 **SSH Distribution**: Automatically distribute certificates to remote servers via SSH
+  - Configure multiple remote hosts with friendly display names
+  - Secure password storage with hashing
+  - Specify custom certificate paths on remote servers
+  - Collapsible host cards for clean interface
+  - Alphabetically sorted host list
+- 📋 **Distribution Logging**: Comprehensive logging of all sync and distribution events
+  - Track certificate sync events
+  - Monitor distribution success/failure per host
+  - Filter logs by event type
+  - View statistics dashboard
 - ⏰ **Human-Friendly Scheduling**: Intuitive schedule configuration with:
   - Easy-to-use frequency selectors (Hourly, Daily, Weekly, Specific Days, Monthly)
   - Visual time pickers for hour and minute selection
@@ -23,13 +34,25 @@ A Docker container with a web-based management interface for retrieving SSL cert
 ## Screenshots
 
 ### Light Mode
-<img src="https://github.com/user-attachments/assets/16365430-6de8-472d-93b1-31140f2e24d7" alt="Settings Tab - Light Mode" width="800">
+<img src="https://github.com/user-attachments/assets/74143c1c-bcde-4e37-b573-497b92912579" alt="Settings Tab - Light Mode" width="800">
 
 *Settings tab showing API configuration, certificate settings, and the intuitive schedule configuration interface*
 
 <img src="https://github.com/user-attachments/assets/291fce27-4db9-469f-9ffb-3ba2390fee86" alt="Domains Tab - Light Mode" width="800">
 
 *Domains tab with enhanced domain management features including custom naming and file separators*
+
+<img src="https://github.com/user-attachments/assets/ce7365eb-3165-4241-b0dc-288bc0c6728c" alt="Distribution Tab - Light Mode" width="800">
+
+*Distribution tab for configuring SSH hosts where certificates will be automatically distributed*
+
+<img src="https://github.com/user-attachments/assets/6433b710-5a25-4c9f-86e2-a1c1be465ec6" alt="Distribution Expanded - Light Mode" width="800">
+
+*Expanded view of a configured SSH host showing all connection details*
+
+<img src="https://github.com/user-attachments/assets/ed0fce32-4a09-4305-b442-3a92f543abab" alt="Logs Tab - Light Mode" width="800">
+
+*Logs tab displaying distribution events, statistics, and filtering options*
 
 ### Dark Mode
 <img src="https://github.com/user-attachments/assets/37c28b18-d8d1-4da1-bd1d-d3a84d3dabc0" alt="Settings Tab - Dark Mode" width="800">
@@ -39,6 +62,10 @@ A Docker container with a web-based management interface for retrieving SSL cert
 <img src="https://github.com/user-attachments/assets/5fb89d36-64f8-4369-9d07-7de30083e822" alt="Domains Tab - Dark Mode" width="800">
 
 *Domain management interface in dark mode*
+
+<img src="https://github.com/user-attachments/assets/6c6ff9b7-cd67-4910-928f-d72d7332c7da" alt="Logs Tab - Dark Mode" width="800">
+
+*Distribution logs with statistics in dark mode*
 
 ## Quick Start
 
@@ -95,15 +122,25 @@ Access the web interface at `http://localhost:5000` to configure:
    - Choose file name separators (underscore, hyphen, or dot)
    - Define alternative file name variants
    - Edit existing domain configurations
-3. **Certificate Settings**: 
+3. **Distribution**: Configure SSH hosts for automatic certificate distribution
+   - Add multiple remote hosts with friendly display names
+   - Specify hostname/IP address, port, username, and password
+   - Set the remote certificate path
+   - Edit or delete existing hosts
+   - Hosts are displayed in collapsible cards sorted alphabetically
+4. **Logs**: View distribution and sync event logs
+   - See statistics for total syncs, distributions, successes, and failures
+   - Filter logs by event type
+   - Review detailed information for each event
+5. **Certificate Settings**: 
    - Output directory
    - File naming format (use `{domain}` placeholder)
    - Certificate formats (PEM, CRT, KEY, PFX)
-4. **Schedule**: Configure automatic sync schedule with user-friendly options
+6. **Schedule**: Configure automatic sync schedule with user-friendly options
    - Select frequency: Hourly, Daily, Weekly, Specific Days, or Monthly
    - Choose specific time with dropdown menus
    - Preview the generated cron expression in real-time
-5. **Theme**: Toggle between light and dark mode using the theme button in the header
+7. **Theme**: Toggle between light and dark mode using the theme button in the header
 
 ### YAML Configuration
 
@@ -127,6 +164,20 @@ certificates:
     - pem
     - crt
     - key
+
+ssh_hosts:
+  - display_name: "Production Server"
+    hostname: "prod.example.com"
+    port: 22
+    username: "root"
+    password_hash: "hashed_password_here"  # Password is securely hashed
+    cert_path: "/etc/ssl/certs"
+  - display_name: "Staging Server"
+    hostname: "staging.example.com"
+    port: 22
+    username: "deploy"
+    password_hash: "hashed_password_here"
+    cert_path: "/opt/certificates"
 
 schedule:
   enabled: true
@@ -152,6 +203,12 @@ The application provides a REST API:
 - `POST /api/domains` - Add a new domain
 - `PUT /api/domains/<domain>` - Update an existing domain
 - `DELETE /api/domains/<domain>` - Remove a domain
+- `GET /api/ssh-hosts` - List configured SSH hosts
+- `POST /api/ssh-hosts` - Add a new SSH host
+- `PUT /api/ssh-hosts/<display_name>` - Update an existing SSH host
+- `DELETE /api/ssh-hosts/<display_name>` - Remove an SSH host
+- `POST /api/distribution/test` - Test SSH connection to a host
+- `GET /api/distribution/logs` - Get distribution logs
 - `POST /api/sync` - Manually trigger certificate sync
 - `GET /api/sync/status` - Get sync status
 - `GET /health` - Health check endpoint
@@ -215,6 +272,16 @@ python -m flask --app app.main run --host 0.0.0.0 --port 5000
 - The container runs as root by default; consider using a non-root user in production
 - **Important**: PFX/PKCS12 files are created without password protection by default for compatibility. Ensure the certificate directory has appropriate file permissions (e.g., `chmod 700 certificates`) to protect private keys
 - Set the `SECRET_KEY` environment variable for production deployments to maintain session persistence
+
+### SSH Distribution Security
+
+- **Password Storage**: SSH passwords are hashed using Werkzeug's secure password hashing (scrypt) before storage in the configuration file
+- **SSH Key Alternative**: For enhanced security, consider using SSH key-based authentication instead of passwords (future enhancement)
+- **Host Key Validation**: The application uses `AutoAddPolicy` to automatically accept SSH host keys for ease of deployment. This accepts unknown host keys without validation, which could be susceptible to man-in-the-middle attacks. For production use, consider implementing SSH key-based authentication with proper known_hosts validation
+- **Network Security**: Ensure SSH access is properly secured on target servers (firewall rules, fail2ban, etc.)
+- **Least Privilege**: Use dedicated service accounts with minimal permissions on remote servers
+- **Audit Logs**: Review distribution logs regularly to monitor certificate deployment activities
+- **Secure Transmission**: SSH connections use standard SSH protocol encryption for secure file transfer
 
 ## Troubleshooting
 

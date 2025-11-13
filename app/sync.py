@@ -9,6 +9,9 @@ from apscheduler.triggers.cron import CronTrigger
 from .porkbun_api import PorkbunAPI
 from .certificate_manager import CertificateManager
 from .config import Config
+from .ssh_config import SSHConfig
+from .ssh_distribution import SSHDistributor
+from .distribution_log import DistributionLog
 
 logger = logging.getLogger(__name__)
 
@@ -30,6 +33,9 @@ class CertificateSync:
             "status": "idle",
             "results": []
         }
+        self.ssh_config = SSHConfig(config)
+        self.ssh_distributor = SSHDistributor(self.ssh_config)
+        self.distribution_log = DistributionLog()
     
     def sync_all(self) -> Dict:
         """
@@ -104,7 +110,17 @@ class CertificateSync:
             self.sync_status["status"] = "completed"
             self.sync_status["results"] = results
             
-            logger.info(f"Certificate sync completed. {len([r for r in results if r['status'] == 'success'])} succeeded, {len([r for r in results if r['status'] == 'error'])} failed")
+            successful_count = len([r for r in results if r['status'] == 'success'])
+            failed_count = len([r for r in results if r['status'] == 'error'])
+            logger.info(f"Certificate sync completed. {successful_count} succeeded, {failed_count} failed")
+            
+            # Log the sync event
+            sync_status = "success" if successful_count > 0 and failed_count == 0 else "partial" if successful_count > 0 else "error"
+            self.distribution_log.add_sync_event(
+                domains=[d.get("domain") for d in domains],
+                status=sync_status,
+                results=results
+            )
             
             return {
                 "status": "success",
@@ -160,3 +176,21 @@ class CertificateSync:
     def get_status(self) -> Dict:
         """Get current sync status"""
         return self.sync_status
+    
+    def distribute_certificates(self, certificate_files: List[str]) -> List[Dict]:
+        """
+        Distribute certificates to all configured SSH hosts
+        
+        Args:
+            certificate_files: List of certificate file paths to distribute
+            
+        Returns:
+            List of distribution results
+        """
+        logger.info("Starting certificate distribution to SSH hosts")
+        results = self.ssh_distributor.distribute_to_all_hosts(certificate_files)
+        
+        # Log the distribution event
+        self.distribution_log.add_bulk_distribution_event(results)
+        
+        return results

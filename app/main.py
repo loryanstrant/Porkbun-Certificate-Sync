@@ -268,5 +268,181 @@ def health():
     return jsonify({"status": "healthy"}), 200
 
 
+@app.route('/api/ssh-hosts', methods=['GET'])
+def get_ssh_hosts():
+    """Get list of SSH hosts"""
+    try:
+        hosts = cert_sync.ssh_config.get_ssh_hosts()
+        # Remove password hashes from response
+        safe_hosts = []
+        for host in hosts:
+            safe_host = host.copy()
+            safe_host.pop('password_hash', None)
+            safe_host['has_password'] = bool(host.get('password_hash'))
+            safe_hosts.append(safe_host)
+        return jsonify({"hosts": safe_hosts})
+    except Exception as e:
+        logger.error(f"Failed to get SSH hosts: {e}")
+        return jsonify({"error": "Failed to load SSH hosts"}), 500
+
+
+@app.route('/api/ssh-hosts', methods=['POST'])
+def add_ssh_host():
+    """Add a new SSH host"""
+    try:
+        data = request.json
+        display_name = data.get('display_name', '').strip()
+        hostname = data.get('hostname', '').strip()
+        port = data.get('port', 22)
+        username = data.get('username', '').strip()
+        password = data.get('password', '')
+        cert_path = data.get('cert_path', '').strip()
+        
+        if not all([display_name, hostname, username, password, cert_path]):
+            return jsonify({"error": "All fields are required"}), 400
+        
+        try:
+            port = int(port)
+            if port < 1 or port > 65535:
+                raise ValueError("Invalid port number")
+        except ValueError:
+            return jsonify({"error": "Invalid port number"}), 400
+        
+        cert_sync.ssh_config.add_ssh_host(
+            display_name, hostname, port, username, password, cert_path
+        )
+        
+        return jsonify({"status": "success", "message": f"SSH host {display_name} added"})
+    except ValueError as e:
+        # ValueError messages come from our own validation code
+        # Sanitize to ensure no stack traces are exposed
+        error_msg = str(e)
+        # Limit length and check for sensitive content
+        if len(error_msg) > 200 or '/' in error_msg or '\\' in error_msg:
+            error_msg = "Invalid SSH host configuration"
+        return jsonify({"error": error_msg}), 400
+    except Exception as e:
+        logger.error(f"Failed to add SSH host: {e}")
+        return jsonify({"error": "Failed to add SSH host"}), 500
+
+
+@app.route('/api/ssh-hosts/<display_name>', methods=['PUT'])
+def update_ssh_host(display_name):
+    """Update an existing SSH host"""
+    try:
+        data = request.json
+        new_display_name = data.get('display_name', '').strip()
+        hostname = data.get('hostname', '').strip()
+        port = data.get('port', 22)
+        username = data.get('username', '').strip()
+        password = data.get('password', '')  # Optional - if empty, keep existing
+        cert_path = data.get('cert_path', '').strip()
+        
+        if not all([new_display_name, hostname, username, cert_path]):
+            return jsonify({"error": "Display name, hostname, username, and cert path are required"}), 400
+        
+        try:
+            port = int(port)
+            if port < 1 or port > 65535:
+                raise ValueError("Invalid port number")
+        except ValueError:
+            return jsonify({"error": "Invalid port number"}), 400
+        
+        cert_sync.ssh_config.update_ssh_host(
+            display_name, new_display_name, hostname, port, username, 
+            password if password else None, cert_path
+        )
+        
+        return jsonify({"status": "success", "message": f"SSH host {new_display_name} updated"})
+    except ValueError as e:
+        # ValueError messages come from our own validation code
+        # Sanitize to ensure no stack traces are exposed
+        error_msg = str(e)
+        # Limit length and check for sensitive content
+        if len(error_msg) > 200 or '/' in error_msg or '\\' in error_msg:
+            error_msg = "Invalid SSH host configuration"
+        return jsonify({"error": error_msg}), 400
+    except Exception as e:
+        logger.error(f"Failed to update SSH host: {e}")
+        return jsonify({"error": "Failed to update SSH host"}), 500
+
+
+@app.route('/api/ssh-hosts/<display_name>', methods=['DELETE'])
+def remove_ssh_host(display_name):
+    """Remove an SSH host"""
+    try:
+        cert_sync.ssh_config.remove_ssh_host(display_name)
+        return jsonify({"status": "success", "message": f"SSH host {display_name} removed"})
+    except Exception as e:
+        logger.error(f"Failed to remove SSH host: {e}")
+        return jsonify({"error": "Failed to remove SSH host"}), 500
+
+
+@app.route('/api/distribution/logs', methods=['GET'])
+def get_distribution_logs():
+    """Get distribution logs"""
+    try:
+        limit = request.args.get('limit', 100, type=int)
+        event_type = request.args.get('event_type', None)
+        
+        logs = cert_sync.distribution_log.get_logs(limit=limit, event_type=event_type)
+        stats = cert_sync.distribution_log.get_stats()
+        
+        return jsonify({
+            "logs": logs,
+            "stats": stats
+        })
+    except Exception as e:
+        logger.error(f"Failed to get distribution logs: {e}")
+        return jsonify({"error": "Failed to get distribution logs"}), 500
+
+
+@app.route('/api/distribution/test', methods=['POST'])
+def test_ssh_connection():
+    """Test SSH connection to a host"""
+    try:
+        data = request.json
+        display_name = data.get('display_name')
+        password = data.get('password')
+        
+        if not display_name or not password:
+            return jsonify({"error": "Display name and password are required"}), 400
+        
+        host_config = cert_sync.ssh_config.get_ssh_host(display_name)
+        if not host_config:
+            return jsonify({"error": "SSH host not found"}), 404
+        
+        # Verify password
+        from werkzeug.security import check_password_hash
+        if not check_password_hash(host_config.get('password_hash'), password):
+            return jsonify({"error": "Invalid password"}), 401
+        
+        # Test connection
+        import paramiko
+        ssh_client = paramiko.SSHClient()
+        # SECURITY NOTE: AutoAddPolicy automatically accepts unknown host keys
+        # This is used for ease of deployment but has security implications.
+        # In production, consider using SSH key-based authentication with known_hosts validation
+        ssh_client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+        
+        try:
+            ssh_client.connect(
+                hostname=host_config.get('hostname'),
+                port=host_config.get('port', 22),
+                username=host_config.get('username'),
+                password=password,
+                timeout=10
+            )
+            ssh_client.close()
+            return jsonify({"status": "success", "message": "Connection successful"})
+        except Exception as e:
+            logger.error(f"SSH connection test failed: {e}")
+            return jsonify({"status": "error", "error": "Connection test failed"}), 400
+            
+    except Exception as e:
+        logger.error(f"Failed to test SSH connection: {e}")
+        return jsonify({"error": "Failed to test connection"}), 500
+
+
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=False)
