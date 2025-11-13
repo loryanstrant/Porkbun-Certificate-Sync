@@ -21,7 +21,10 @@ class DistributionLog:
             log_file: Path to log file (defaults to /app/config/distribution_log.json)
         """
         if log_file is None:
-            log_file = "/app/config/distribution_log.json"
+            import os
+            config_path = os.environ.get('CONFIG_PATH', '/app/config/config.yaml')
+            config_dir = os.path.dirname(config_path)
+            log_file = os.path.join(config_dir, 'distribution_log.json')
         
         self.log_file = log_file
         self.log_dir = Path(log_file).parent

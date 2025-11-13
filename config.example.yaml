@@ -29,3 +29,12 @@ schedule:
   # "0 */6 * * *"    # Every 6 hours
   # "0 0 * * 0"      # Weekly on Sunday
   # "0 0 1 * *"      # Monthly on the 1st
+
+ssh_hosts: []
+  # Example:
+  # - display_name: "Production Server"
+  #   hostname: "prod.example.com"
+  #   port: 22
+  #   username: "root"
+  #   password_hash: "hashed_password_here"
+  #   cert_path: "/etc/ssl/certs"
