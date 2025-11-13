@@ -314,7 +314,9 @@ def add_ssh_host():
         
         return jsonify({"status": "success", "message": f"SSH host {display_name} added"})
     except ValueError as e:
-        return jsonify({"error": str(e)}), 400
+        # ValueError messages are safe to return as they come from our own validation
+        error_msg = sanitize_error_message(e)
+        return jsonify({"error": error_msg}), 400
     except Exception as e:
         logger.error(f"Failed to add SSH host: {e}")
         return jsonify({"error": "Failed to add SSH host"}), 500
@@ -349,7 +351,9 @@ def update_ssh_host(display_name):
         
         return jsonify({"status": "success", "message": f"SSH host {new_display_name} updated"})
     except ValueError as e:
-        return jsonify({"error": str(e)}), 400
+        # ValueError messages are safe to return as they come from our own validation
+        error_msg = sanitize_error_message(e)
+        return jsonify({"error": error_msg}), 400
     except Exception as e:
         logger.error(f"Failed to update SSH host: {e}")
         return jsonify({"error": "Failed to update SSH host"}), 500
@@ -408,6 +412,9 @@ def test_ssh_connection():
         # Test connection
         import paramiko
         ssh_client = paramiko.SSHClient()
+        # SECURITY NOTE: AutoAddPolicy automatically accepts unknown host keys
+        # This is used for ease of deployment but has security implications.
+        # In production, consider using SSH key-based authentication with known_hosts validation
         ssh_client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
         
         try:
@@ -421,7 +428,8 @@ def test_ssh_connection():
             ssh_client.close()
             return jsonify({"status": "success", "message": "Connection successful"})
         except Exception as e:
-            return jsonify({"status": "error", "error": str(e)}), 400
+            logger.error(f"SSH connection test failed: {e}")
+            return jsonify({"status": "error", "error": "Connection test failed"}), 400
             
     except Exception as e:
         logger.error(f"Failed to test SSH connection: {e}")

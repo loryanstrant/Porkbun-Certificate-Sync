@@ -277,6 +277,7 @@ python -m flask --app app.main run --host 0.0.0.0 --port 5000
 
 - **Password Storage**: SSH passwords are hashed using Werkzeug's secure password hashing (scrypt) before storage in the configuration file
 - **SSH Key Alternative**: For enhanced security, consider using SSH key-based authentication instead of passwords (future enhancement)
+- **Host Key Validation**: The application uses `AutoAddPolicy` to automatically accept SSH host keys for ease of deployment. This accepts unknown host keys without validation, which could be susceptible to man-in-the-middle attacks. For production use, consider implementing SSH key-based authentication with proper known_hosts validation
 - **Network Security**: Ensure SSH access is properly secured on target servers (firewall rules, fail2ban, etc.)
 - **Least Privilege**: Use dedicated service accounts with minimal permissions on remote servers
 - **Audit Logs**: Review distribution logs regularly to monitor certificate deployment activities

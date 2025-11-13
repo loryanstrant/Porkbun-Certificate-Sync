@@ -50,6 +50,9 @@ class SSHDistributor:
         try:
             # Create SSH client
             ssh_client = paramiko.SSHClient()
+            # SECURITY NOTE: AutoAddPolicy automatically accepts unknown host keys
+            # This is used for ease of deployment but has security implications.
+            # In production, consider using SSH key-based authentication with known_hosts validation
             ssh_client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
             
             # Note: password_hash is actually the hashed password from storage
@@ -102,6 +105,9 @@ class SSHDistributor:
         try:
             # Create SSH client
             ssh_client = paramiko.SSHClient()
+            # SECURITY NOTE: AutoAddPolicy automatically accepts unknown host keys
+            # This is used for ease of deployment but has security implications.
+            # In production, consider using SSH key-based authentication with known_hosts validation
             ssh_client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
             
             # Connect to host
