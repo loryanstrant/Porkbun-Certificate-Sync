@@ -244,6 +244,13 @@
                         <input type="text" id="ssh_cert_path" name="cert_path" required placeholder="/etc/ssl/certs">
                         <small>Remote directory where certificates will be stored</small>
                     </div>
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" id="ssh_use_sudo" name="use_sudo">
+                            Use sudo for file operations
+                        </label>
+                        <small>Enable this if the user doesn't have direct write permissions to the certificate path</small>
+                    </div>
                     <div style="display: flex; gap: 10px;">
                         <button type="submit" class="btn btn-primary" id="ssh-host-submit-btn">Add SSH Host</button>
                         <button type="button" class="btn" id="cancel-ssh-edit-btn" style="display: none; background: #95a5a6; color: white;" onclick="cancelEditSSHHost()">Cancel</button>

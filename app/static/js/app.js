@@ -604,6 +604,7 @@ function createSSHHostCard(host) {
             <div><strong>Port:</strong> ${host.port}</div>
             <div><strong>Username:</strong> ${host.username}</div>
             <div><strong>Certificate Path:</strong> ${host.cert_path}</div>
+            <div><strong>Use Sudo:</strong> ${host.use_sudo ? 'Yes' : 'No'}</div>
         </div>
         <div class="card-actions">
             <button class="btn btn-small" onclick="editSSHHost('${host.display_name}')">✏️ Edit</button>
@@ -643,7 +644,8 @@ document.getElementById('ssh-host-form').addEventListener('submit', async (e) =>
         port: parseInt(document.getElementById('ssh_port').value),
         username: document.getElementById('ssh_username').value,
         password: document.getElementById('ssh_password').value,
-        cert_path: document.getElementById('ssh_cert_path').value
+        cert_path: document.getElementById('ssh_cert_path').value,
+        use_sudo: document.getElementById('ssh_use_sudo').checked
     };
     
     // Validate password for new hosts
@@ -707,6 +709,7 @@ async function editSSHHost(displayName) {
         document.getElementById('ssh_username').value = host.username;
         document.getElementById('ssh_password').value = '';
         document.getElementById('ssh_cert_path').value = host.cert_path;
+        document.getElementById('ssh_use_sudo').checked = host.use_sudo || false;
         
         // Set edit mode
         document.getElementById('ssh_edit_mode').value = 'true';
@@ -728,6 +731,7 @@ async function editSSHHost(displayName) {
 function cancelEditSSHHost() {
     document.getElementById('ssh-host-form').reset();
     document.getElementById('ssh_port').value = '22';
+    document.getElementById('ssh_use_sudo').checked = false;
     document.getElementById('ssh_edit_mode').value = 'false';
     document.getElementById('ssh_original_display_name').value = '';
     document.getElementById('ssh-host-form-title').textContent = 'Add SSH Host';
