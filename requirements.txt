@@ -4,3 +4,4 @@ requests==2.32.4
 cryptography==44.0.1
 apscheduler==3.10.4
 gunicorn==22.0.0
+paramiko==3.4.0

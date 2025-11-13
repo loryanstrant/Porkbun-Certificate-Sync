@@ -510,3 +510,291 @@ body.dark-mode .notification.success {
 body.dark-mode .notification.error {
     background: #c0392b;
 }
+
+/* Collapsible Cards */
+.collapsible-card {
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    margin-bottom: 15px;
+    overflow: hidden;
+    background: white;
+}
+
+.card-header {
+    background: #f5f5f5;
+    padding: 15px;
+    cursor: pointer;
+    user-select: none;
+    transition: background 0.3s;
+}
+
+.card-header:hover {
+    background: #e8e8e8;
+}
+
+.card-header h3 {
+    margin: 0;
+    font-size: 1.1em;
+    color: #333;
+}
+
+.toggle-icon {
+    display: inline-block;
+    margin-right: 10px;
+    transition: transform 0.3s;
+}
+
+.card-content {
+    padding: 20px;
+    border-top: 1px solid #ddd;
+}
+
+.info-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.info-grid div {
+    padding: 10px;
+    background: #f9f9f9;
+    border-radius: 4px;
+}
+
+.card-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 15px;
+}
+
+.btn-small {
+    padding: 8px 16px;
+    font-size: 0.9em;
+}
+
+.btn-danger {
+    background: #e74c3c;
+}
+
+.btn-danger:hover {
+    background: #c0392b;
+}
+
+/* Log Filters */
+.log-filters {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.log-filters label {
+    margin: 0;
+}
+
+.log-filters select {
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 0.95em;
+}
+
+/* Log Statistics */
+.log-stats {
+    margin-bottom: 30px;
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 15px;
+}
+
+.stat-card {
+    background: #f5f5f5;
+    padding: 20px;
+    border-radius: 8px;
+    text-align: center;
+    border: 2px solid #ddd;
+}
+
+.stat-card h3 {
+    font-size: 2em;
+    margin-bottom: 5px;
+    color: #667eea;
+}
+
+.stat-card p {
+    margin: 0;
+    color: #666;
+    font-size: 0.9em;
+}
+
+.stat-card.success {
+    border-color: #27ae60;
+}
+
+.stat-card.success h3 {
+    color: #27ae60;
+}
+
+.stat-card.error {
+    border-color: #e74c3c;
+}
+
+.stat-card.error h3 {
+    color: #e74c3c;
+}
+
+/* Log Entries */
+.logs-container {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.log-entry {
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 15px;
+    background: white;
+}
+
+.log-entry.log-success {
+    border-left: 4px solid #27ae60;
+}
+
+.log-entry.log-error {
+    border-left: 4px solid #e74c3c;
+}
+
+.log-entry.log-partial {
+    border-left: 4px solid #f39c12;
+}
+
+.log-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+    font-weight: 600;
+}
+
+.log-icon {
+    font-size: 1.5em;
+}
+
+.log-type {
+    flex: 1;
+    color: #333;
+}
+
+.log-time {
+    color: #888;
+    font-size: 0.9em;
+    font-weight: normal;
+}
+
+.badge {
+    padding: 4px 12px;
+    border-radius: 12px;
+    font-size: 0.85em;
+    font-weight: 600;
+}
+
+.badge-success {
+    background: #27ae60;
+    color: white;
+}
+
+.badge-error {
+    background: #e74c3c;
+    color: white;
+}
+
+.badge-warning {
+    background: #f39c12;
+    color: white;
+}
+
+.log-details {
+    padding-top: 10px;
+    border-top: 1px solid #eee;
+    color: #555;
+}
+
+.log-details p {
+    margin: 8px 0;
+}
+
+.log-details ul {
+    margin: 8px 0;
+    padding-left: 20px;
+}
+
+.log-details li {
+    margin: 5px 0;
+}
+
+.error-message {
+    color: #e74c3c;
+    font-weight: 600;
+}
+
+/* Dark Mode - Collapsible Cards */
+body.dark-mode .collapsible-card {
+    background: #2c3e50;
+    border-color: #34495e;
+}
+
+body.dark-mode .card-header {
+    background: #34495e;
+}
+
+body.dark-mode .card-header:hover {
+    background: #3d566e;
+}
+
+body.dark-mode .card-header h3 {
+    color: #ecf0f1;
+}
+
+body.dark-mode .card-content {
+    border-top-color: #34495e;
+}
+
+body.dark-mode .info-grid div {
+    background: #34495e;
+    color: #ecf0f1;
+}
+
+/* Dark Mode - Logs */
+body.dark-mode .log-filters select {
+    background: #2c3e50;
+    color: #ecf0f1;
+    border-color: #34495e;
+}
+
+body.dark-mode .stat-card {
+    background: #2c3e50;
+    border-color: #34495e;
+}
+
+body.dark-mode .stat-card p {
+    color: #a8a8a8;
+}
+
+body.dark-mode .log-entry {
+    background: #2c3e50;
+    border-color: #34495e;
+}
+
+body.dark-mode .log-type {
+    color: #ecf0f1;
+}
+
+body.dark-mode .log-details {
+    border-top-color: #34495e;
+    color: #a8a8a8;
+}

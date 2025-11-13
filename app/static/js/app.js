@@ -16,6 +16,10 @@ function openTab(tabName) {
         loadSyncStatus();
     } else if (tabName === 'settings') {
         loadSettings();
+    } else if (tabName === 'distribution') {
+        loadSSHHosts();
+    } else if (tabName === 'logs') {
+        loadDistributionLogs();
     }
 }
 
@@ -548,3 +552,356 @@ function toggleDarkMode() {
         document.getElementById('dark-mode-icon').textContent = '☀️';
     }
 })();
+
+// SSH Host Management
+async function loadSSHHosts() {
+    try {
+        const response = await fetch('/api/ssh-hosts');
+        const data = await response.json();
+        
+        if (data.error) {
+            throw new Error(data.error);
+        }
+        
+        const hostsList = document.getElementById('ssh-hosts-list');
+        
+        if (data.hosts.length === 0) {
+            hostsList.innerHTML = '<p class="no-data">No SSH hosts configured. Add one above.</p>';
+            return;
+        }
+        
+        hostsList.innerHTML = '';
+        data.hosts.forEach(host => {
+            const hostCard = createSSHHostCard(host);
+            hostsList.appendChild(hostCard);
+        });
+        
+    } catch (error) {
+        console.error('Failed to load SSH hosts:', error);
+        showNotification('Failed to load SSH hosts: ' + error.message, 'error');
+    }
+}
+
+function createSSHHostCard(host) {
+    const card = document.createElement('div');
+    card.className = 'collapsible-card';
+    
+    const header = document.createElement('div');
+    header.className = 'card-header';
+    header.onclick = () => toggleCard(card);
+    
+    const title = document.createElement('h3');
+    title.innerHTML = `<span class="toggle-icon">▶</span> ${host.display_name}`;
+    header.appendChild(title);
+    
+    const content = document.createElement('div');
+    content.className = 'card-content';
+    content.style.display = 'none';
+    
+    content.innerHTML = `
+        <div class="info-grid">
+            <div><strong>Hostname:</strong> ${host.hostname}</div>
+            <div><strong>Port:</strong> ${host.port}</div>
+            <div><strong>Username:</strong> ${host.username}</div>
+            <div><strong>Certificate Path:</strong> ${host.cert_path}</div>
+        </div>
+        <div class="card-actions">
+            <button class="btn btn-small" onclick="editSSHHost('${host.display_name}')">✏️ Edit</button>
+            <button class="btn btn-small btn-danger" onclick="deleteSSHHost('${host.display_name}')">🗑️ Delete</button>
+        </div>
+    `;
+    
+    card.appendChild(header);
+    card.appendChild(content);
+    
+    return card;
+}
+
+function toggleCard(card) {
+    const content = card.querySelector('.card-content');
+    const icon = card.querySelector('.toggle-icon');
+    
+    if (content.style.display === 'none') {
+        content.style.display = 'block';
+        icon.textContent = '▼';
+    } else {
+        content.style.display = 'none';
+        icon.textContent = '▶';
+    }
+}
+
+// SSH Host Form Handling
+document.getElementById('ssh-host-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const editMode = document.getElementById('ssh_edit_mode').value === 'true';
+    const originalDisplayName = document.getElementById('ssh_original_display_name').value;
+    
+    const formData = {
+        display_name: document.getElementById('ssh_display_name').value,
+        hostname: document.getElementById('ssh_hostname').value,
+        port: parseInt(document.getElementById('ssh_port').value),
+        username: document.getElementById('ssh_username').value,
+        password: document.getElementById('ssh_password').value,
+        cert_path: document.getElementById('ssh_cert_path').value
+    };
+    
+    // Validate password for new hosts
+    if (!editMode && !formData.password) {
+        showNotification('Password is required for new SSH hosts', 'error');
+        return;
+    }
+    
+    try {
+        let response;
+        if (editMode) {
+            response = await fetch(`/api/ssh-hosts/${encodeURIComponent(originalDisplayName)}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(formData)
+            });
+        } else {
+            response = await fetch('/api/ssh-hosts', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(formData)
+            });
+        }
+        
+        const data = await response.json();
+        
+        if (!response.ok) {
+            throw new Error(data.error || 'Failed to save SSH host');
+        }
+        
+        showNotification(data.message, 'success');
+        document.getElementById('ssh-host-form').reset();
+        document.getElementById('ssh_port').value = '22';
+        
+        if (editMode) {
+            cancelEditSSHHost();
+        }
+        
+        loadSSHHosts();
+        
+    } catch (error) {
+        console.error('Failed to save SSH host:', error);
+        showNotification('Failed to save SSH host: ' + error.message, 'error');
+    }
+});
+
+async function editSSHHost(displayName) {
+    try {
+        const response = await fetch('/api/ssh-hosts');
+        const data = await response.json();
+        
+        const host = data.hosts.find(h => h.display_name === displayName);
+        if (!host) {
+            throw new Error('Host not found');
+        }
+        
+        // Populate form
+        document.getElementById('ssh_display_name').value = host.display_name;
+        document.getElementById('ssh_hostname').value = host.hostname;
+        document.getElementById('ssh_port').value = host.port;
+        document.getElementById('ssh_username').value = host.username;
+        document.getElementById('ssh_password').value = '';
+        document.getElementById('ssh_cert_path').value = host.cert_path;
+        
+        // Set edit mode
+        document.getElementById('ssh_edit_mode').value = 'true';
+        document.getElementById('ssh_original_display_name').value = displayName;
+        document.getElementById('ssh-host-form-title').textContent = 'Edit SSH Host';
+        document.getElementById('ssh-host-submit-btn').textContent = 'Update SSH Host';
+        document.getElementById('cancel-ssh-edit-btn').style.display = 'inline-block';
+        document.getElementById('password-hint').textContent = 'Leave empty to keep existing password';
+        
+        // Scroll to form
+        document.getElementById('ssh-host-form').scrollIntoView({ behavior: 'smooth' });
+        
+    } catch (error) {
+        console.error('Failed to load SSH host:', error);
+        showNotification('Failed to load SSH host: ' + error.message, 'error');
+    }
+}
+
+function cancelEditSSHHost() {
+    document.getElementById('ssh-host-form').reset();
+    document.getElementById('ssh_port').value = '22';
+    document.getElementById('ssh_edit_mode').value = 'false';
+    document.getElementById('ssh_original_display_name').value = '';
+    document.getElementById('ssh-host-form-title').textContent = 'Add SSH Host';
+    document.getElementById('ssh-host-submit-btn').textContent = 'Add SSH Host';
+    document.getElementById('cancel-ssh-edit-btn').style.display = 'none';
+    document.getElementById('password-hint').textContent = 'Required for new hosts. Leave empty to keep existing password when editing.';
+}
+
+async function deleteSSHHost(displayName) {
+    if (!confirm(`Are you sure you want to delete SSH host "${displayName}"?`)) {
+        return;
+    }
+    
+    try {
+        const response = await fetch(`/api/ssh-hosts/${encodeURIComponent(displayName)}`, {
+            method: 'DELETE'
+        });
+        
+        const data = await response.json();
+        
+        if (!response.ok) {
+            throw new Error(data.error || 'Failed to delete SSH host');
+        }
+        
+        showNotification(data.message, 'success');
+        loadSSHHosts();
+        
+    } catch (error) {
+        console.error('Failed to delete SSH host:', error);
+        showNotification('Failed to delete SSH host: ' + error.message, 'error');
+    }
+}
+
+// Distribution Logs
+async function loadDistributionLogs() {
+    try {
+        const eventType = document.getElementById('log-filter').value;
+        const url = eventType ? `/api/distribution/logs?event_type=${eventType}` : '/api/distribution/logs';
+        
+        const response = await fetch(url);
+        const data = await response.json();
+        
+        if (data.error) {
+            throw new Error(data.error);
+        }
+        
+        // Display statistics
+        const statsDiv = document.getElementById('log-stats');
+        statsDiv.innerHTML = `
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <h3>${data.stats.total_syncs}</h3>
+                    <p>Total Syncs</p>
+                </div>
+                <div class="stat-card">
+                    <h3>${data.stats.total_distributions}</h3>
+                    <p>Total Distributions</p>
+                </div>
+                <div class="stat-card success">
+                    <h3>${data.stats.successful_distributions}</h3>
+                    <p>Successful</p>
+                </div>
+                <div class="stat-card error">
+                    <h3>${data.stats.failed_distributions}</h3>
+                    <p>Failed</p>
+                </div>
+            </div>
+        `;
+        
+        // Display logs
+        const logsDiv = document.getElementById('distribution-logs');
+        
+        if (data.logs.length === 0) {
+            logsDiv.innerHTML = '<p class="no-data">No logs found.</p>';
+            return;
+        }
+        
+        logsDiv.innerHTML = '<div class="logs-container"></div>';
+        const logsContainer = logsDiv.querySelector('.logs-container');
+        
+        data.logs.forEach(log => {
+            const logEntry = createLogEntry(log);
+            logsContainer.appendChild(logEntry);
+        });
+        
+    } catch (error) {
+        console.error('Failed to load distribution logs:', error);
+        showNotification('Failed to load logs: ' + error.message, 'error');
+    }
+}
+
+function createLogEntry(log) {
+    const entry = document.createElement('div');
+    entry.className = `log-entry log-${log.status || 'info'}`;
+    
+    const timestamp = new Date(log.timestamp).toLocaleString();
+    const eventIcon = getEventIcon(log.event_type);
+    const statusBadge = getStatusBadge(log.status);
+    
+    let content = `
+        <div class="log-header">
+            <span class="log-icon">${eventIcon}</span>
+            <span class="log-type">${formatEventType(log.event_type)}</span>
+            ${statusBadge}
+            <span class="log-time">${timestamp}</span>
+        </div>
+        <div class="log-details">
+    `;
+    
+    if (log.event_type === 'certificate_sync') {
+        content += `<p><strong>Domains:</strong> ${log.domains.join(', ')}</p>`;
+        if (log.results && log.results.length > 0) {
+            content += '<p><strong>Results:</strong></p><ul>';
+            log.results.forEach(result => {
+                content += `<li>${result.domain}: ${result.status}</li>`;
+            });
+            content += '</ul>';
+        }
+    } else if (log.event_type === 'certificate_distribution') {
+        content += `<p><strong>Domain:</strong> ${log.domain}</p>`;
+        content += `<p><strong>Host:</strong> ${log.host}</p>`;
+        if (log.files && log.files.length > 0) {
+            content += `<p><strong>Files:</strong> ${log.files.join(', ')}</p>`;
+        }
+        if (log.error) {
+            content += `<p class="error-message"><strong>Error:</strong> ${log.error}</p>`;
+        }
+    } else if (log.event_type === 'bulk_distribution') {
+        content += `<p><strong>Total Hosts:</strong> ${log.total_hosts}</p>`;
+        content += `<p><strong>Successful:</strong> ${log.successful} | <strong>Failed:</strong> ${log.failed}</p>`;
+        if (log.results && log.results.length > 0) {
+            content += '<p><strong>Results:</strong></p><ul>';
+            log.results.forEach(result => {
+                content += `<li>${result.host}: ${result.status}`;
+                if (result.error) {
+                    content += ` - ${result.error}`;
+                }
+                content += '</li>';
+            });
+            content += '</ul>';
+        }
+    }
+    
+    content += '</div>';
+    entry.innerHTML = content;
+    
+    return entry;
+}
+
+function getEventIcon(eventType) {
+    const icons = {
+        'certificate_sync': '🔄',
+        'certificate_distribution': '🚀',
+        'bulk_distribution': '📦'
+    };
+    return icons[eventType] || '📝';
+}
+
+function getStatusBadge(status) {
+    if (!status) return '';
+    
+    const badges = {
+        'success': '<span class="badge badge-success">Success</span>',
+        'error': '<span class="badge badge-error">Error</span>',
+        'partial': '<span class="badge badge-warning">Partial</span>'
+    };
+    return badges[status] || `<span class="badge">${status}</span>`;
+}
+
+function formatEventType(eventType) {
+    const formats = {
+        'certificate_sync': 'Certificate Sync',
+        'certificate_distribution': 'Certificate Distribution',
+        'bulk_distribution': 'Bulk Distribution'
+    };
+    return formats[eventType] || eventType;
+}

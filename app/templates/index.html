@@ -23,6 +23,8 @@
         <div class="tabs">
             <button class="tab-button active" onclick="openTab('settings')">⚙️ Settings</button>
             <button class="tab-button" onclick="openTab('domains')">🌐 Domains</button>
+            <button class="tab-button" onclick="openTab('distribution')">🚀 Distribution</button>
+            <button class="tab-button" onclick="openTab('logs')">📋 Logs</button>
             <button class="tab-button" onclick="openTab('sync')">🔄 Sync</button>
         </div>
 
@@ -204,6 +206,78 @@
                 <h2>Configured Domains</h2>
                 <div id="domains-list">
                     <p class="loading">Loading domains...</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Distribution Tab -->
+        <div id="distribution" class="tab-content">
+            <div class="section">
+                <h2 id="ssh-host-form-title">Add SSH Host</h2>
+                <form id="ssh-host-form">
+                    <input type="hidden" id="ssh_edit_mode" value="false">
+                    <input type="hidden" id="ssh_original_display_name" value="">
+                    <div class="form-group">
+                        <label for="ssh_display_name">Display Name:</label>
+                        <input type="text" id="ssh_display_name" name="display_name" required placeholder="Production Server">
+                        <small>Friendly name for this host</small>
+                    </div>
+                    <div class="form-group">
+                        <label for="ssh_hostname">Hostname/IP Address:</label>
+                        <input type="text" id="ssh_hostname" name="hostname" required placeholder="server.example.com or 192.168.1.100">
+                    </div>
+                    <div class="form-group">
+                        <label for="ssh_port">SSH Port:</label>
+                        <input type="number" id="ssh_port" name="port" value="22" min="1" max="65535" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="ssh_username">Username:</label>
+                        <input type="text" id="ssh_username" name="username" required placeholder="root">
+                    </div>
+                    <div class="form-group">
+                        <label for="ssh_password">Password:</label>
+                        <input type="password" id="ssh_password" name="password" placeholder="Enter password">
+                        <small id="password-hint">Required for new hosts. Leave empty to keep existing password when editing.</small>
+                    </div>
+                    <div class="form-group">
+                        <label for="ssh_cert_path">Certificate Path:</label>
+                        <input type="text" id="ssh_cert_path" name="cert_path" required placeholder="/etc/ssl/certs">
+                        <small>Remote directory where certificates will be stored</small>
+                    </div>
+                    <div style="display: flex; gap: 10px;">
+                        <button type="submit" class="btn btn-primary" id="ssh-host-submit-btn">Add SSH Host</button>
+                        <button type="button" class="btn" id="cancel-ssh-edit-btn" style="display: none; background: #95a5a6; color: white;" onclick="cancelEditSSHHost()">Cancel</button>
+                    </div>
+                </form>
+            </div>
+
+            <div class="section">
+                <h2>Configured SSH Hosts</h2>
+                <div id="ssh-hosts-list">
+                    <p class="loading">Loading SSH hosts...</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Logs Tab -->
+        <div id="logs" class="tab-content">
+            <div class="section">
+                <h2>Distribution Logs</h2>
+                <div class="log-filters">
+                    <label for="log-filter">Filter:</label>
+                    <select id="log-filter" onchange="loadDistributionLogs()">
+                        <option value="">All Events</option>
+                        <option value="certificate_sync">Certificate Syncs</option>
+                        <option value="certificate_distribution">Certificate Distributions</option>
+                        <option value="bulk_distribution">Bulk Distributions</option>
+                    </select>
+                    <button class="btn" onclick="loadDistributionLogs()" style="margin-left: 10px;">🔄 Refresh</button>
+                </div>
+                <div id="log-stats" class="log-stats">
+                    <p class="loading">Loading statistics...</p>
+                </div>
+                <div id="distribution-logs">
+                    <p class="loading">Loading logs...</p>
                 </div>
             </div>
         </div>
