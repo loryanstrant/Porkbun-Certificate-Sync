@@ -11,6 +11,7 @@ dist/
 *.egg-info/
 .DS_Store
 config.yaml
+config/
 certificates/
 *.log
 .env
