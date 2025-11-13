@@ -304,11 +304,36 @@ Check your API credentials in the Settings tab. Use the "Test Connection" featur
 
 ### Permission Issues
 
+#### Local File System
+
 Ensure the mounted volumes have appropriate permissions:
 
 ```bash
 chmod 755 certificates config
 ```
+
+#### SSH Distribution
+
+If you encounter "Permission denied" errors when distributing certificates to remote hosts:
+
+1. Check the error message in the distribution logs
+2. If the remote path requires elevated privileges (e.g., `/etc/ssl/certs`), enable `use_sudo: true` in your SSH host configuration
+3. Ensure the remote user account has sudo privileges
+4. Verify the remote user's password is correctly configured
+
+Example configuration for hosts requiring sudo:
+
+```yaml
+ssh_hosts:
+  - display_name: "My Server"
+    hostname: "server.example.com"
+    port: 22
+    username: "deploy"
+    password_encrypted: "..."
+    cert_path: "/etc/ssl/certs"
+    use_sudo: true  # Enable this for paths requiring elevated privileges
+```
+
 
 ## Contributing
 
