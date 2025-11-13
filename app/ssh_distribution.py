@@ -3,12 +3,8 @@ SSH certificate distribution
 """
 import os
 import logging
-import warnings
 from typing import Dict, List, Optional
 import paramiko
-
-# Suppress paramiko deprecation warnings about TripleDES
-warnings.filterwarnings('ignore', category=DeprecationWarning, module='paramiko')
 
 logger = logging.getLogger(__name__)
 
