@@ -117,7 +117,7 @@ class CertificateManager:
         
         Args:
             name: Base name for output file
-            cert_pem: Certificate in PEM format
+            cert_pem: Certificate in PEM format (or empty if should extract from chain)
             key_pem: Private key in PEM format
             chain_pem: Certificate chain in PEM format
             password: Password for PFX file (empty by default for compatibility)
@@ -126,9 +126,6 @@ class CertificateManager:
             Path to PFX file
         """
         try:
-            # Load the certificate
-            cert = x509.load_pem_x509_certificate(cert_pem.encode(), default_backend())
-            
             # Load the private key
             key = serialization.load_pem_private_key(
                 key_pem.encode(),
@@ -136,20 +133,40 @@ class CertificateManager:
                 backend=default_backend()
             )
             
-            # Load additional certificates (chain)
-            ca_certs = []
-            # Split chain into individual certificates
+            # Try to load the certificate from cert_pem first
+            cert = None
+            try:
+                if cert_pem and cert_pem.strip():
+                    cert = x509.load_pem_x509_certificate(cert_pem.encode(), default_backend())
+                    logger.debug("Loaded certificate from cert_pem parameter")
+            except Exception as e:
+                logger.debug(f"Could not load certificate from cert_pem: {e}")
+            
+            # Parse all certificates from the chain
+            all_chain_certs = []
             chain_parts = chain_pem.split('-----BEGIN CERTIFICATE-----')
             for part in chain_parts[1:]:  # Skip the first empty part
                 cert_data = '-----BEGIN CERTIFICATE-----' + part
                 try:
-                    ca_cert = x509.load_pem_x509_certificate(
+                    chain_cert = x509.load_pem_x509_certificate(
                         cert_data.encode(), 
                         default_backend()
                     )
-                    ca_certs.append(ca_cert)
+                    all_chain_certs.append(chain_cert)
                 except Exception:
                     continue
+            
+            # If we couldn't load the certificate from cert_pem, use the first one from the chain
+            if cert is None:
+                if not all_chain_certs:
+                    raise ValueError("No valid certificates found in cert_pem or chain_pem")
+                cert = all_chain_certs[0]
+                ca_certs = all_chain_certs[1:] if len(all_chain_certs) > 1 else []
+                logger.debug(f"Using first certificate from chain as main certificate, {len(ca_certs)} CA certificates")
+            else:
+                # Use all chain certificates as CA certificates
+                ca_certs = all_chain_certs
+                logger.debug(f"Using cert_pem as main certificate, {len(ca_certs)} CA certificates from chain")
             
             # Create PKCS12
             pfx_data = pkcs12.serialize_key_and_certificates(
