@@ -5,6 +5,7 @@ Uses symmetric encryption with a key derived from environment or generated
 import os
 import base64
 import logging
+from pathlib import Path
 from cryptography.fernet import Fernet
 
 logger = logging.getLogger(__name__)
@@ -20,7 +21,12 @@ class PasswordEncryption:
     
     def _get_or_create_encryption_key(self) -> bytes:
         """
-        Get encryption key from environment or generate one
+        Get encryption key from environment, file, or generate one
+        
+        Priority:
+        1. ENCRYPTION_KEY environment variable
+        2. Key file in config directory
+        3. Generate new key and save to file
         
         Returns:
             Base64-encoded Fernet key
@@ -33,18 +39,49 @@ class PasswordEncryption:
                 # Validate it's a proper Fernet key
                 key = base64.urlsafe_b64decode(env_key)
                 if len(key) == 32:
+                    logger.info("Using encryption key from ENCRYPTION_KEY environment variable")
                     return env_key.encode()
             except Exception:
-                logger.warning("Invalid ENCRYPTION_KEY in environment, generating new key")
+                logger.warning("Invalid ENCRYPTION_KEY in environment, checking for key file")
         
-        # Generate a new key (will be different each restart if not persisted)
+        # Try to get key from file
+        config_dir = os.environ.get('CONFIG_PATH', '/app/config/config.yaml')
+        config_dir = os.path.dirname(config_dir)
+        key_file = os.path.join(config_dir, '.encryption_key')
+        
+        if os.path.exists(key_file):
+            try:
+                with open(key_file, 'r') as f:
+                    file_key = f.read().strip()
+                # Validate it's a proper Fernet key
+                key = base64.urlsafe_b64decode(file_key)
+                if len(key) == 32:
+                    logger.info(f"Using encryption key from file: {key_file}")
+                    return file_key.encode()
+            except Exception as e:
+                logger.warning(f"Invalid encryption key in file {key_file}: {e}")
+        
+        # Generate a new key and save it to file
         key = Fernet.generate_key()
-        logger.warning(
-            "No ENCRYPTION_KEY environment variable set. "
-            "Generated temporary encryption key. "
-            "Set ENCRYPTION_KEY environment variable to persist passwords across restarts. "
-            f"Current key: {key.decode()}"
-        )
+        try:
+            # Ensure config directory exists
+            os.makedirs(config_dir, exist_ok=True)
+            # Save key to file with restricted permissions
+            with open(key_file, 'w') as f:
+                f.write(key.decode())
+            # Set file permissions to 600 (read/write for owner only)
+            os.chmod(key_file, 0o600)
+            logger.info(
+                f"Generated new encryption key and saved to {key_file}. "
+                "This key will persist across container restarts."
+            )
+        except Exception as e:
+            logger.warning(
+                f"Failed to save encryption key to file: {e}. "
+                "Key will not persist across container restarts. "
+                f"Current key: {key.decode()}"
+            )
+        
         return key
     
     def encrypt_password(self, password: str) -> str:

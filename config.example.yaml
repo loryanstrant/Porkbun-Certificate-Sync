@@ -1,5 +1,9 @@
 # Example configuration for Porkbun Certificate Sync
 # Copy this file to config/config.yaml and update with your settings
+#
+# Note: SSH passwords are encrypted using a key stored in .encryption_key
+# in the same directory as this config file. This ensures passwords persist
+# across container updates as long as the config volume is mounted.
 
 api:
   api_key: ""
