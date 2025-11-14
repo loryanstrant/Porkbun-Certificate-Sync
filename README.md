@@ -257,7 +257,7 @@ python -m flask --app app.main run --host 0.0.0.0 --port 5000
 - `CONFIG_PATH`: Path to configuration file (default: `/app/config/config.yaml`)
 - `SECRET_KEY`: Flask secret key for session management
 - `FLASK_APP`: Flask application module (default: `app.main`)
-- `ENCRYPTION_KEY`: (Recommended) Encryption key for SSH passwords. If not set, a temporary key is generated on each restart, requiring you to re-enter all SSH passwords. Generate with: `python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"`
+- `ENCRYPTION_KEY`: (Optional) Encryption key for SSH passwords. If not set, a key is automatically generated and saved to `/app/config/.encryption_key`, which persists across container restarts as long as the config volume is mounted. You can manually set this if you need to use the same key across multiple instances. Generate with: `python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"`
 
 ## Volumes
 
@@ -280,7 +280,7 @@ python -m flask --app app.main run --host 0.0.0.0 --port 5000
 
 ### SSH Distribution Security
 
-- **Password Storage**: SSH passwords are encrypted using Fernet symmetric encryption before storage in the configuration file. Set the `ENCRYPTION_KEY` environment variable to persist passwords across container restarts.
+- **Password Storage**: SSH passwords are encrypted using Fernet symmetric encryption before storage in the configuration file. The encryption key is automatically generated and persisted to `/app/config/.encryption_key` (which is in the mounted config volume), ensuring passwords remain valid across container updates and restarts. Alternatively, you can manually set the `ENCRYPTION_KEY` environment variable if you need to use the same key across multiple instances.
 - **Sudo Support**: The application supports using `sudo` for privileged operations when deploying certificates to protected directories. This is useful when certificates need to be placed in system directories like `/etc/ssl/certs`.
 - **Automatic Distribution**: After successful certificate sync, certificates are automatically distributed to all configured SSH hosts. This eliminates the need for manual copying and ensures all servers have the latest certificates.
 - **SSH Key Alternative**: For enhanced security, consider using SSH key-based authentication instead of passwords (future enhancement)
