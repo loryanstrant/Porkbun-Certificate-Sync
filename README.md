@@ -46,17 +46,13 @@ A Docker container with a web-based management interface for retrieving SSL cert
 
 *Settings tab showing API configuration, certificate settings, and the intuitive schedule configuration interface*
 
-<img src="https://github.com/user-attachments/assets/291fce27-4db9-469f-9ffb-3ba2390fee86" alt="Domains Tab - Light Mode" width="800">
+<img src="https://github.com/user-attachments/assets/b840f1ba-d3e3-4e63-b83b-30dfacecc6a8" alt="Domains Tab - Light Mode" width="800">
 
-*Domains tab with enhanced domain management features including custom naming and file separators*
+*Domains tab with domain management features including custom naming and file separators*
 
-<img src="https://github.com/user-attachments/assets/ce7365eb-3165-4241-b0dc-288bc0c6728c" alt="Distribution Tab - Light Mode" width="800">
+<img src="https://github.com/user-attachments/assets/e1ad96a2-2141-42e8-bcef-ce834ce951cf" alt="Distribution Tab with File Overrides - Light Mode" width="800">
 
-*Distribution tab for configuring SSH hosts where certificates will be automatically distributed*
-
-<img src="https://github.com/user-attachments/assets/6433b710-5a25-4c9f-86e2-a1c1be465ec6" alt="Distribution Expanded - Light Mode" width="800">
-
-*Expanded view of a configured SSH host showing all connection details*
+*Distribution tab for configuring SSH hosts with per-host custom file name overrides*
 
 <img src="https://github.com/user-attachments/assets/ed0fce32-4a09-4305-b442-3a92f543abab" alt="Logs Tab - Light Mode" width="800">
 
@@ -67,9 +63,13 @@ A Docker container with a web-based management interface for retrieving SSL cert
 
 *Dark mode provides a comfortable viewing experience in low-light environments*
 
-<img src="https://github.com/user-attachments/assets/5fb89d36-64f8-4369-9d07-7de30083e822" alt="Domains Tab - Dark Mode" width="800">
+<img src="https://github.com/user-attachments/assets/d2093bd9-abf1-4eb1-9117-7f3ae242d99c" alt="Domains Tab - Dark Mode" width="800">
 
 *Domain management interface in dark mode*
+
+<img src="https://github.com/user-attachments/assets/75c43160-9dc2-4d4f-9f07-a9216d7fa224" alt="Distribution Tab with File Overrides - Dark Mode" width="800">
+
+*Distribution tab with custom file name overrides in dark mode — properly styled for readability*
 
 <img src="https://github.com/user-attachments/assets/6c6ff9b7-cd67-4910-928f-d72d7332c7da" alt="Logs Tab - Dark Mode" width="800">
 
