@@ -11,6 +11,12 @@ A Docker container with a web-based management interface for retrieving SSL cert
   - Custom base names for certificates
   - Configurable file name separators (underscore, hyphen, dot)
   - Alternative file name variants for flexibility
+  - **Per-domain file name overrides** for fine-grained control (e.g., cert.pem, chain.pem, privkey.pem)
+- 🔗 **Intermediary Certificate Split**: Automatically extracts and saves intermediary certificates as separate files
+  - Full chain certificate (leaf + intermediates + root)
+  - Individual leaf certificate
+  - Separate intermediary chain file (intermediates + root only)
+  - Private key
 - 🔄 **Format Conversion**: Support for multiple certificate formats (PEM, CRT, KEY, PFX/PKCS12)
 - 🚀 **SSH Distribution**: Automatically distribute certificates to remote servers via SSH
   - Configure multiple remote hosts with friendly display names
@@ -123,6 +129,7 @@ Access the web interface at `http://localhost:5000` to configure:
    - Set custom base names for certificate files
    - Choose file name separators (underscore, hyphen, or dot)
    - Define alternative file name variants
+   - **Override file names per domain**: Use custom file names like cert.pem, chain.pem, privkey.pem, fullchain.pem
    - Edit existing domain configurations
 3. **Distribution**: Configure SSH hosts for automatic certificate distribution
    - Add multiple remote hosts with friendly display names
@@ -190,10 +197,25 @@ schedule:
 
 ## Certificate Formats
 
-- **PEM**: Full chain, private key, and certificate as separate files
+- **PEM**: Full chain, private key, certificate, and intermediary chain as separate files
+  - `{name}_fullchain.pem` or `fullchain.pem` - Complete certificate chain (leaf + intermediates + root)
+  - `{name}_cert.pem` or `cert.pem` - Leaf certificate only
+  - `{name}_chain.pem` or `chain.pem` - Intermediary certificate chain (intermediates + root, without leaf)
+  - `{name}_private.key` or `privkey.pem` - Private key
 - **CRT**: Certificate chain as a single `.crt` file
 - **KEY**: Private key as a separate `.key` file
 - **PFX/PKCS12**: Combined certificate and private key in `.pfx` format
+
+### File Naming Options
+
+You have flexible control over certificate file names:
+
+1. **Default Naming**: Uses custom base name + separator + file type
+   - Example with base name "strant.casa" and separator "_": `strant.casa_fullchain.pem`, `strant.casa_cert.pem`, `strant.casa_chain.pem`, `strant.casa_private.key`
+
+2. **Per-Domain File Overrides**: Override individual file names for specific domains
+   - Example: `cert.pem`, `chain.pem`, `privkey.pem`, `fullchain.pem`
+   - This is useful when deploying to systems that expect specific file names (e.g., Let's Encrypt style naming)
 
 ## API Endpoints
 
