@@ -55,19 +55,21 @@ class SSHDistributor:
             The overridden file name, or the original if no override matches
         """
         # Map file name patterns to override keys
+        # These patterns include the separator character to avoid false matches
         # Check fullchain before chain since 'chain' would also match 'fullchain'
+        separators = ['_', '-', '.']
         type_patterns = [
-            ('fullchain', ['fullchain.pem', 'fullchain.']),
-            ('privkey', ['private.key', 'privkey.', 'private.']),
-            ('cert', ['cert.pem', 'cert.']),
-            ('chain', ['chain.pem', 'chain.']),
+            ('fullchain', [f'{sep}fullchain.pem' for sep in separators]),
+            ('privkey', [f'{sep}private.key' for sep in separators]),
+            ('cert', [f'{sep}cert.pem' for sep in separators]),
+            ('chain', [f'{sep}chain.pem' for sep in separators]),
         ]
         
         filename_lower = filename.lower()
         for override_key, patterns in type_patterns:
             if override_key in file_overrides:
                 for pattern in patterns:
-                    if pattern in filename_lower:
+                    if filename_lower.endswith(pattern):
                         logger.debug(f"Applying file override: {filename} -> {file_overrides[override_key]}")
                         return file_overrides[override_key]
         

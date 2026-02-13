@@ -136,11 +136,12 @@ class SSHConfig:
         
         # Handle file_overrides
         if file_overrides is not None:
+            # Explicit value provided: set if non-empty, remove if empty
             if file_overrides:
                 host_config["file_overrides"] = file_overrides
-            # If file_overrides is empty dict or None, don't include it (removes existing overrides)
+            # Empty dict means remove existing overrides (don't add to config)
         else:
-            # Keep existing file_overrides if not provided in update
+            # No value provided (None): keep existing file_overrides
             existing_overrides = hosts[host_index].get("file_overrides")
             if existing_overrides:
                 host_config["file_overrides"] = existing_overrides
