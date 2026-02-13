@@ -11,7 +11,6 @@ A Docker container with a web-based management interface for retrieving SSL cert
   - Custom base names for certificates
   - Configurable file name separators (underscore, hyphen, dot)
   - Alternative file name variants for flexibility
-  - **Per-domain file name overrides** for fine-grained control (e.g., cert.pem, chain.pem, privkey.pem)
 - 🔗 **Intermediary Certificate Split**: Automatically extracts and saves intermediary certificates as separate files
   - Full chain certificate (leaf + intermediates + root)
   - Individual leaf certificate
@@ -23,6 +22,7 @@ A Docker container with a web-based management interface for retrieving SSL cert
   - Secure password storage with encryption
   - Automatic distribution after successful certificate sync
   - Sudo support for deploying to protected directories
+  - **Per-host file name overrides** for custom remote file naming (e.g., cert.pem, chain.pem, privkey.pem)
   - Specify custom certificate paths on remote servers
   - Collapsible host cards for clean interface
   - Alphabetically sorted host list
@@ -129,12 +129,12 @@ Access the web interface at `http://localhost:5000` to configure:
    - Set custom base names for certificate files
    - Choose file name separators (underscore, hyphen, or dot)
    - Define alternative file name variants
-   - **Override file names per domain**: Use custom file names like cert.pem, chain.pem, privkey.pem, fullchain.pem
    - Edit existing domain configurations
 3. **Distribution**: Configure SSH hosts for automatic certificate distribution
    - Add multiple remote hosts with friendly display names
    - Specify hostname/IP address, port, username, and password
    - Set the remote certificate path
+   - **Override file names per host**: Use custom file names like cert.pem, chain.pem, privkey.pem, fullchain.pem for specific hosts
    - Edit or delete existing hosts
    - Hosts are displayed in collapsible cards sorted alphabetically
 4. **Logs**: View distribution and sync event logs
@@ -182,6 +182,11 @@ ssh_hosts:
     password_encrypted: "encrypted_password_here"  # Password is securely encrypted
     cert_path: "/etc/ssl/certs"
     use_sudo: true  # Use sudo for privileged operations
+    file_overrides:  # Optional: custom file names for this host
+      cert: "cert.pem"
+      chain: "chain.pem"
+      privkey: "privkey.pem"
+      fullchain: "fullchain.pem"
   - display_name: "Staging Server"
     hostname: "staging.example.com"
     port: 22
@@ -198,10 +203,10 @@ schedule:
 ## Certificate Formats
 
 - **PEM**: Full chain, private key, certificate, and intermediary chain as separate files
-  - `{name}_fullchain.pem` or `fullchain.pem` - Complete certificate chain (leaf + intermediates + root)
-  - `{name}_cert.pem` or `cert.pem` - Leaf certificate only
-  - `{name}_chain.pem` or `chain.pem` - Intermediary certificate chain (intermediates + root, without leaf)
-  - `{name}_private.key` or `privkey.pem` - Private key
+  - `{name}_fullchain.pem` - Complete certificate chain (leaf + intermediates + root)
+  - `{name}_cert.pem` - Leaf certificate only
+  - `{name}_chain.pem` - Intermediary certificate chain (intermediates + root, without leaf)
+  - `{name}_private.key` - Private key
 - **CRT**: Certificate chain as a single `.crt` file
 - **KEY**: Private key as a separate `.key` file
 - **PFX/PKCS12**: Combined certificate and private key in `.pfx` format
@@ -213,9 +218,10 @@ You have flexible control over certificate file names:
 1. **Default Naming**: Uses custom base name + separator + file type
    - Example with base name "strant.casa" and separator "_": `strant.casa_fullchain.pem`, `strant.casa_cert.pem`, `strant.casa_chain.pem`, `strant.casa_private.key`
 
-2. **Per-Domain File Overrides**: Override individual file names for specific domains
+2. **Per-Host File Overrides**: Override individual file names for specific SSH hosts
    - Example: `cert.pem`, `chain.pem`, `privkey.pem`, `fullchain.pem`
    - This is useful when deploying to systems that expect specific file names (e.g., Let's Encrypt style naming)
+   - Configured per SSH host so different servers can use different file naming conventions
 
 ## API Endpoints
 

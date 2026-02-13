@@ -314,27 +314,6 @@ document.getElementById('domain-form').addEventListener('submit', async (e) => {
         alt_file_names: altFileNames
     };
     
-    // Add file overrides if the checkbox is checked
-    const useFileOverrides = document.getElementById('use_file_overrides').checked;
-    if (useFileOverrides) {
-        const certFilename = document.getElementById('cert_filename').value.trim();
-        const chainFilename = document.getElementById('chain_filename').value.trim();
-        const privkeyFilename = document.getElementById('privkey_filename').value.trim();
-        const fullchainFilename = document.getElementById('fullchain_filename').value.trim();
-        
-        // Only include non-empty overrides
-        const fileOverrides = {};
-        if (certFilename) fileOverrides.cert = certFilename;
-        if (chainFilename) fileOverrides.chain = chainFilename;
-        if (privkeyFilename) fileOverrides.privkey = privkeyFilename;
-        if (fullchainFilename) fileOverrides.fullchain = fullchainFilename;
-        
-        // Only add file_overrides if at least one override is provided
-        if (Object.keys(fileOverrides).length > 0) {
-            data.file_overrides = fileOverrides;
-        }
-    }
-    
     try {
         let response;
         if (editMode) {
@@ -367,21 +346,21 @@ document.getElementById('domain-form').addEventListener('submit', async (e) => {
     }
 });
 
-// Toggle File Overrides Section
-function toggleFileOverrides() {
-    const checkbox = document.getElementById('use_file_overrides');
-    const section = document.getElementById('file-overrides-section');
+// Toggle SSH File Overrides Section
+function toggleSSHFileOverrides() {
+    const checkbox = document.getElementById('ssh_use_file_overrides');
+    const section = document.getElementById('ssh-file-overrides-section');
     section.style.display = checkbox.checked ? 'block' : 'none';
 }
 
-// Reset File Overrides fields
-function resetFileOverrides() {
-    document.getElementById('use_file_overrides').checked = false;
-    document.getElementById('cert_filename').value = '';
-    document.getElementById('chain_filename').value = '';
-    document.getElementById('privkey_filename').value = '';
-    document.getElementById('fullchain_filename').value = '';
-    toggleFileOverrides();
+// Reset SSH File Overrides fields
+function resetSSHFileOverrides() {
+    document.getElementById('ssh_use_file_overrides').checked = false;
+    document.getElementById('ssh_cert_filename').value = '';
+    document.getElementById('ssh_chain_filename').value = '';
+    document.getElementById('ssh_privkey_filename').value = '';
+    document.getElementById('ssh_fullchain_filename').value = '';
+    toggleSSHFileOverrides();
 }
 
 // Edit Domain
@@ -399,18 +378,6 @@ function editDomain(domain) {
     document.getElementById('separator').value = domain.separator || '_';
     document.getElementById('alt_file_names').value = (domain.alt_file_names || []).join(', ');
     
-    // Populate file overrides if present
-    if (domain.file_overrides) {
-        document.getElementById('use_file_overrides').checked = true;
-        toggleFileOverrides();
-        document.getElementById('cert_filename').value = domain.file_overrides.cert || '';
-        document.getElementById('chain_filename').value = domain.file_overrides.chain || '';
-        document.getElementById('privkey_filename').value = domain.file_overrides.privkey || '';
-        document.getElementById('fullchain_filename').value = domain.file_overrides.fullchain || '';
-    } else {
-        resetFileOverrides();
-    }
-    
     // Update UI
     document.getElementById('domain-form-title').textContent = 'Edit Domain';
     document.getElementById('domain-submit-btn').textContent = 'Update Domain';
@@ -423,9 +390,6 @@ function cancelEditDomain() {
     document.getElementById('domain-form').reset();
     document.getElementById('edit_mode').value = 'false';
     document.getElementById('original_domain').value = '';
-    
-    // Reset file overrides section
-    resetFileOverrides();
     
     // Update UI
     document.getElementById('domain-form-title').textContent = 'Add Domain';
@@ -458,12 +422,6 @@ async function loadDomains() {
                     <p>Separator: ${domain.separator || '_'}</p>
                     ${domain.alt_file_names && domain.alt_file_names.length > 0 ? 
                         `<p>Alternative file names: ${domain.alt_file_names.join(', ')}</p>` : ''}
-                    ${domain.file_overrides ? 
-                        `<p style="color: #3498db; font-weight: 500;">✓ Using custom file names: ${
-                            Object.entries(domain.file_overrides)
-                                .map(([key, value]) => `${key}=${value}`)
-                                .join(', ')
-                        }</p>` : ''}
                 </div>
                 <div style="display: flex; gap: 10px;">
                     <button class="btn btn-primary" onclick='editDomain(${JSON.stringify(domain)})'>Edit</button>
@@ -665,6 +623,12 @@ function createSSHHostCard(host) {
             <div><strong>Certificate Path:</strong> ${host.cert_path}</div>
             <div><strong>Use Sudo:</strong> ${host.use_sudo ? 'Yes' : 'No'}</div>
         </div>
+        ${host.file_overrides ? 
+            `<p class="file-overrides-info">✓ Using custom file names: ${
+                Object.entries(host.file_overrides)
+                    .map(([key, value]) => `${key}=${value}`)
+                    .join(', ')
+            }</p>` : ''}
         <div class="card-actions">
             <button class="btn btn-small" onclick="editSSHHost('${host.display_name}')">✏️ Edit</button>
             <button class="btn btn-small btn-danger" onclick="deleteSSHHost('${host.display_name}')">🗑️ Delete</button>
@@ -706,6 +670,25 @@ document.getElementById('ssh-host-form').addEventListener('submit', async (e) =>
         cert_path: document.getElementById('ssh_cert_path').value,
         use_sudo: document.getElementById('ssh_use_sudo').checked
     };
+    
+    // Add file overrides if the checkbox is checked
+    const useFileOverrides = document.getElementById('ssh_use_file_overrides').checked;
+    if (useFileOverrides) {
+        const certFilename = document.getElementById('ssh_cert_filename').value.trim();
+        const chainFilename = document.getElementById('ssh_chain_filename').value.trim();
+        const privkeyFilename = document.getElementById('ssh_privkey_filename').value.trim();
+        const fullchainFilename = document.getElementById('ssh_fullchain_filename').value.trim();
+        
+        const fileOverrides = {};
+        if (certFilename) fileOverrides.cert = certFilename;
+        if (chainFilename) fileOverrides.chain = chainFilename;
+        if (privkeyFilename) fileOverrides.privkey = privkeyFilename;
+        if (fullchainFilename) fileOverrides.fullchain = fullchainFilename;
+        
+        if (Object.keys(fileOverrides).length > 0) {
+            formData.file_overrides = fileOverrides;
+        }
+    }
     
     // Validate password for new hosts
     if (!editMode && !formData.password) {
@@ -770,6 +753,18 @@ async function editSSHHost(displayName) {
         document.getElementById('ssh_cert_path').value = host.cert_path;
         document.getElementById('ssh_use_sudo').checked = host.use_sudo || false;
         
+        // Populate file overrides if present
+        if (host.file_overrides) {
+            document.getElementById('ssh_use_file_overrides').checked = true;
+            toggleSSHFileOverrides();
+            document.getElementById('ssh_cert_filename').value = host.file_overrides.cert || '';
+            document.getElementById('ssh_chain_filename').value = host.file_overrides.chain || '';
+            document.getElementById('ssh_privkey_filename').value = host.file_overrides.privkey || '';
+            document.getElementById('ssh_fullchain_filename').value = host.file_overrides.fullchain || '';
+        } else {
+            resetSSHFileOverrides();
+        }
+        
         // Set edit mode
         document.getElementById('ssh_edit_mode').value = 'true';
         document.getElementById('ssh_original_display_name').value = displayName;
@@ -791,6 +786,7 @@ function cancelEditSSHHost() {
     document.getElementById('ssh-host-form').reset();
     document.getElementById('ssh_port').value = '22';
     document.getElementById('ssh_use_sudo').checked = false;
+    resetSSHFileOverrides();
     document.getElementById('ssh_edit_mode').value = 'false';
     document.getElementById('ssh_original_display_name').value = '';
     document.getElementById('ssh-host-form-title').textContent = 'Add SSH Host';
