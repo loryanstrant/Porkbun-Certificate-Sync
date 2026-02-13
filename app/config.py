@@ -93,7 +93,8 @@ class Config:
         return self.config.get("domains", [])
     
     def add_domain(self, domain: str, custom_name: Optional[str] = None, 
-                   separator: Optional[str] = None, alt_file_names: Optional[List[str]] = None):
+                   separator: Optional[str] = None, alt_file_names: Optional[List[str]] = None,
+                   file_overrides: Optional[Dict[str, str]] = None):
         """Add a domain to the configuration"""
         domains = self.config.get("domains", [])
         
@@ -108,12 +109,17 @@ class Config:
             "alt_file_names": alt_file_names or []
         }
         
+        # Add file_overrides if provided
+        if file_overrides:
+            domain_config["file_overrides"] = file_overrides
+        
         domains.append(domain_config)
         self.config["domains"] = domains
         self.save()
     
     def update_domain(self, original_domain: str, domain: str, custom_name: Optional[str] = None,
-                     separator: Optional[str] = None, alt_file_names: Optional[List[str]] = None):
+                     separator: Optional[str] = None, alt_file_names: Optional[List[str]] = None,
+                     file_overrides: Optional[Dict[str, str]] = None):
         """Update a domain in the configuration"""
         domains = self.config.get("domains", [])
         
@@ -133,12 +139,18 @@ class Config:
                 raise ValueError(f"Domain {domain} already exists")
         
         # Update the domain
-        domains[domain_index] = {
+        updated_config = {
             "domain": domain,
             "custom_name": custom_name or domain,
             "separator": separator or "_",
             "alt_file_names": alt_file_names or []
         }
+        
+        # Add file_overrides if provided
+        if file_overrides:
+            updated_config["file_overrides"] = file_overrides
+        
+        domains[domain_index] = updated_config
         
         self.config["domains"] = domains
         self.save()

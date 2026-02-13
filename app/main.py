@@ -176,11 +176,12 @@ def add_domain():
         custom_name = data.get('custom_name', '').strip()
         separator = data.get('separator', '_')
         alt_file_names = data.get('alt_file_names', [])
+        file_overrides = data.get('file_overrides', None)
         
         if not domain:
             return jsonify({"error": "Domain is required"}), 400
         
-        config.add_domain(domain, custom_name or None, separator, alt_file_names)
+        config.add_domain(domain, custom_name or None, separator, alt_file_names, file_overrides)
         
         return jsonify({"status": "success", "message": f"Domain {domain} added"})
     except ValueError as e:
@@ -206,11 +207,12 @@ def update_domain(domain):
         custom_name = data.get('custom_name', '').strip()
         separator = data.get('separator', '_')
         alt_file_names = data.get('alt_file_names', [])
+        file_overrides = data.get('file_overrides', None)
         
         if not new_domain:
             return jsonify({"error": "Domain is required"}), 400
         
-        config.update_domain(domain, new_domain, custom_name or None, separator, alt_file_names)
+        config.update_domain(domain, new_domain, custom_name or None, separator, alt_file_names, file_overrides)
         
         return jsonify({"status": "success", "message": f"Domain {new_domain} updated"})
     except ValueError as e:

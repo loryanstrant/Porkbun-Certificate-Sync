@@ -195,6 +195,36 @@
                         <input type="text" id="alt_file_names" name="alt_file_names" placeholder="domain, production">
                         <small>Additional file name variants to save certificates as (e.g., "domain" will save as domain.cert.pem)</small>
                     </div>
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" id="use_file_overrides" name="use_file_overrides" onchange="toggleFileOverrides()">
+                            Use Custom File Names (override default naming)
+                        </label>
+                        <small>Override the default file naming pattern with custom names</small>
+                    </div>
+                    <div id="file-overrides-section" style="display: none; margin-left: 20px; padding: 15px; background: #f8f9fa; border-radius: 5px; border-left: 3px solid #3498db;">
+                        <h4 style="margin-top: 0; color: #2c3e50;">Custom File Names</h4>
+                        <div class="form-group">
+                            <label for="cert_filename">Certificate File Name:</label>
+                            <input type="text" id="cert_filename" name="cert_filename" placeholder="cert.pem">
+                            <small>Name for the certificate file (e.g., cert.pem, certificate.pem)</small>
+                        </div>
+                        <div class="form-group">
+                            <label for="chain_filename">Intermediary Chain File Name:</label>
+                            <input type="text" id="chain_filename" name="chain_filename" placeholder="chain.pem">
+                            <small>Name for the intermediary certificate chain file (e.g., chain.pem, intermediate.pem)</small>
+                        </div>
+                        <div class="form-group">
+                            <label for="privkey_filename">Private Key File Name:</label>
+                            <input type="text" id="privkey_filename" name="privkey_filename" placeholder="privkey.pem">
+                            <small>Name for the private key file (e.g., privkey.pem, private.key)</small>
+                        </div>
+                        <div class="form-group">
+                            <label for="fullchain_filename">Full Chain File Name:</label>
+                            <input type="text" id="fullchain_filename" name="fullchain_filename" placeholder="fullchain.pem">
+                            <small>Name for the full certificate chain file (e.g., fullchain.pem, full.pem)</small>
+                        </div>
+                    </div>
                     <div style="display: flex; gap: 10px;">
                         <button type="submit" class="btn btn-primary" id="domain-submit-btn">Add Domain</button>
                         <button type="button" class="btn" id="cancel-edit-btn" style="display: none; background: #95a5a6; color: white;" onclick="cancelEditDomain()">Cancel</button>
