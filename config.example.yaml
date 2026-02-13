@@ -17,13 +17,6 @@ domains: []
   #   alt_names:
   #     - "www.example.com"
   #     - "api.example.com"
-  #   file_overrides:  # Optional: Override file names for this specific domain
-  #     cert: "cert.pem"         # Certificate file name
-  #     chain: "chain.pem"       # Intermediary certificate chain file name
-  #     privkey: "privkey.pem"   # Private key file name
-  #     fullchain: "fullchain.pem"  # Full chain file name
-  #     # NOTE: When using file_overrides, the custom_name and separator are ignored.
-  #     # Ensure override names are unique across domains to avoid overwriting files.
 
 certificates:
   output_dir: "/app/certificates"
@@ -51,3 +44,10 @@ ssh_hosts: []
   #   password_encrypted: "encrypted_password_here"  # Password is encrypted (not hashed)
   #   cert_path: "/etc/ssl/certs"
   #   use_sudo: false  # Set to true if sudo is required for file operations
+  #   file_overrides:  # Optional: Override file names for this specific host
+  #     cert: "cert.pem"         # Certificate file name
+  #     chain: "chain.pem"       # Intermediary certificate chain file name
+  #     privkey: "privkey.pem"   # Private key file name
+  #     fullchain: "fullchain.pem"  # Full chain file name
+  #     # NOTE: When using file_overrides, files are renamed during distribution
+  #     # to match the specified names on the remote host.

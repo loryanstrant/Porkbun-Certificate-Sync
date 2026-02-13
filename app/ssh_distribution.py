@@ -38,6 +38,43 @@ class SSHDistributor:
         # Fallback to string matching for cases where errno might not be set correctly
         return "Permission denied" in str(exception)
     
+    def _apply_file_override(self, filename: str, file_overrides: dict) -> str:
+        """
+        Apply file name override based on the certificate file type.
+        
+        Determines the file type by checking common suffixes in the filename
+        and returns the override name if one is configured.
+        
+        Args:
+            filename: Original file name (e.g., 'example.com_cert.pem')
+            file_overrides: Dict mapping file types to custom names
+                           Keys: 'cert', 'chain', 'privkey', 'fullchain'
+                           Values: custom file names (e.g., 'cert.pem')
+        
+        Returns:
+            The overridden file name, or the original if no override matches
+        """
+        # Map file name patterns to override keys
+        # These patterns include the separator character to avoid false matches
+        # Check fullchain before chain since 'chain' would also match 'fullchain'
+        separators = ['_', '-', '.']
+        type_patterns = [
+            ('fullchain', [f'{sep}fullchain.pem' for sep in separators]),
+            ('privkey', [f'{sep}private.key' for sep in separators]),
+            ('cert', [f'{sep}cert.pem' for sep in separators]),
+            ('chain', [f'{sep}chain.pem' for sep in separators]),
+        ]
+        
+        filename_lower = filename.lower()
+        for override_key, patterns in type_patterns:
+            if override_key in file_overrides:
+                for pattern in patterns:
+                    if filename_lower.endswith(pattern):
+                        logger.debug(f"Applying file override: {filename} -> {file_overrides[override_key]}")
+                        return file_overrides[override_key]
+        
+        return filename
+    
     def distribute_to_host(self, host_config: Dict, certificate_files: List[str]) -> Dict:
         """
         Distribute certificates to a single host
@@ -112,6 +149,7 @@ class SSHDistributor:
         username = host_config.get("username")
         cert_path = host_config.get("cert_path")
         use_sudo = host_config.get("use_sudo", False)
+        file_overrides = host_config.get("file_overrides", {})
         
         logger.info(f"Starting distribution to {display_name} ({hostname})")
         
@@ -172,6 +210,11 @@ class SSHDistributor:
                     continue
                 
                 filename = os.path.basename(local_file)
+                
+                # Apply file_overrides if configured for this host
+                if file_overrides:
+                    filename = self._apply_file_override(filename, file_overrides)
+                
                 remote_file = os.path.join(cert_path, filename).replace('\\', '/')
                 
                 if use_sudo:

@@ -32,7 +32,8 @@ class SSHConfig:
         return sorted(hosts, key=lambda x: x.get("display_name", "").lower())
     
     def add_ssh_host(self, display_name: str, hostname: str, port: int, 
-                     username: str, password: str, cert_path: str, use_sudo: bool = False):
+                     username: str, password: str, cert_path: str, use_sudo: bool = False,
+                     file_overrides: dict = None):
         """
         Add an SSH host to the configuration
         
@@ -44,6 +45,7 @@ class SSHConfig:
             password: SSH password (will be encrypted)
             cert_path: Path where certificates should be stored on remote host
             use_sudo: Whether to use sudo for file operations on remote host
+            file_overrides: Optional dict to override specific file names for this host
         """
         hosts = self.config.config.get("ssh_hosts", [])
         
@@ -65,6 +67,10 @@ class SSHConfig:
             "use_sudo": use_sudo
         }
         
+        # Add file_overrides if provided
+        if file_overrides:
+            host_config["file_overrides"] = file_overrides
+        
         hosts.append(host_config)
         self.config.config["ssh_hosts"] = hosts
         self.config.save()
@@ -72,7 +78,8 @@ class SSHConfig:
     
     def update_ssh_host(self, original_display_name: str, display_name: str, 
                        hostname: str, port: int, username: str, 
-                       password: Optional[str], cert_path: str, use_sudo: Optional[bool] = None):
+                       password: Optional[str], cert_path: str, use_sudo: Optional[bool] = None,
+                       file_overrides: Optional[dict] = None):
         """
         Update an SSH host in the configuration
         
@@ -85,6 +92,7 @@ class SSHConfig:
             password: SSH password (will be encrypted). If None, keeps existing password
             cert_path: Path where certificates should be stored on remote host
             use_sudo: Whether to use sudo for file operations. If None, keeps existing setting
+            file_overrides: Optional dict to override specific file names for this host
         """
         hosts = self.config.config.get("ssh_hosts", [])
         
@@ -125,6 +133,18 @@ class SSHConfig:
             host_config["use_sudo"] = use_sudo
         else:
             host_config["use_sudo"] = hosts[host_index].get("use_sudo", False)
+        
+        # Handle file_overrides
+        if file_overrides is not None:
+            # Explicit value provided: set if non-empty, remove if empty
+            if file_overrides:
+                host_config["file_overrides"] = file_overrides
+            # Empty dict means remove existing overrides (don't add to config)
+        else:
+            # No value provided (None): keep existing file_overrides
+            existing_overrides = hosts[host_index].get("file_overrides")
+            if existing_overrides:
+                host_config["file_overrides"] = existing_overrides
         
         hosts[host_index] = host_config
         self.config.config["ssh_hosts"] = hosts

@@ -798,3 +798,35 @@ body.dark-mode .log-details {
     border-top-color: #34495e;
     color: #a8a8a8;
 }
+
+/* File Overrides Section */
+.file-overrides-box {
+    margin-left: 20px;
+    padding: 15px;
+    background: #f8f9fa;
+    border-radius: 5px;
+    border-left: 3px solid #3498db;
+}
+
+.file-overrides-box h4 {
+    margin-top: 0;
+    color: #2c3e50;
+}
+
+.file-overrides-info {
+    color: #3498db;
+    font-weight: 500;
+}
+
+body.dark-mode .file-overrides-box {
+    background: #1a1a2e;
+    border-left-color: #4cc9f0;
+}
+
+body.dark-mode .file-overrides-box h4 {
+    color: #4cc9f0;
+}
+
+body.dark-mode .file-overrides-info {
+    color: #4cc9f0;
+}

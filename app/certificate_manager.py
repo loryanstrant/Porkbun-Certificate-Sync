@@ -57,8 +57,7 @@ class CertificateManager:
     def save_certificate(self, domain: str, cert_chain: str, private_key: str, 
                         public_key: str, custom_name: str = None,
                         formats: List[str] = None, separator: str = "_",
-                        alt_file_names: List[str] = None,
-                        file_overrides: Dict[str, str] = None) -> Dict[str, str]:
+                        alt_file_names: List[str] = None) -> Dict[str, str]:
         """
         Save certificate files
         
@@ -71,9 +70,6 @@ class CertificateManager:
             formats: List of formats to save (pem, crt, key, pfx)
             separator: Separator for file names (_, -, or .)
             alt_file_names: Alternative file name variants to save
-            file_overrides: Optional dict to override specific file names
-                           Keys: 'cert', 'chain', 'privkey', 'fullchain'
-                           Values: custom file names (e.g., 'cert.pem', 'chain.pem')
             
         Returns:
             Dictionary mapping format to file path
@@ -83,9 +79,6 @@ class CertificateManager:
         
         if alt_file_names is None:
             alt_file_names = []
-        
-        if file_overrides is None:
-            file_overrides = {}
         
         name = custom_name or domain
         saved_files = {}
@@ -100,24 +93,11 @@ class CertificateManager:
             for file_name in all_names:
                 # Always save PEM format components
                 if "pem" in formats:
-                    # Determine file names (use overrides if provided, otherwise use default pattern)
-                    if file_overrides:
-                        # Use file overrides for custom naming
-                        # NOTE: When file_overrides is used, files are named exactly as specified
-                        # (e.g., "cert.pem", not "domain_cert.pem"). This means:
-                        # 1. The custom_name and separator are ignored when overrides are present
-                        # 2. Multiple domains with the same override names will overwrite each other
-                        # 3. Users should ensure override names are unique across domains to avoid conflicts
-                        fullchain_filename = file_overrides.get('fullchain', f"{file_name}{separator}fullchain.pem")
-                        key_filename = file_overrides.get('privkey', f"{file_name}{separator}private.key")
-                        cert_filename = file_overrides.get('cert', f"{file_name}{separator}cert.pem")
-                        chain_filename = file_overrides.get('chain', f"{file_name}{separator}chain.pem")
-                    else:
-                        # Use default naming pattern
-                        fullchain_filename = f"{file_name}{separator}fullchain.pem"
-                        key_filename = f"{file_name}{separator}private.key"
-                        cert_filename = f"{file_name}{separator}cert.pem"
-                        chain_filename = f"{file_name}{separator}chain.pem"
+                    # Use default naming pattern
+                    fullchain_filename = f"{file_name}{separator}fullchain.pem"
+                    key_filename = f"{file_name}{separator}private.key"
+                    cert_filename = f"{file_name}{separator}cert.pem"
+                    chain_filename = f"{file_name}{separator}chain.pem"
                     
                     # Save full chain
                     fullchain_path = os.path.join(self.output_dir, fullchain_filename)

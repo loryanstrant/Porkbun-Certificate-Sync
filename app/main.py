@@ -176,12 +176,11 @@ def add_domain():
         custom_name = data.get('custom_name', '').strip()
         separator = data.get('separator', '_')
         alt_file_names = data.get('alt_file_names', [])
-        file_overrides = data.get('file_overrides', None)
         
         if not domain:
             return jsonify({"error": "Domain is required"}), 400
         
-        config.add_domain(domain, custom_name or None, separator, alt_file_names, file_overrides)
+        config.add_domain(domain, custom_name or None, separator, alt_file_names)
         
         return jsonify({"status": "success", "message": f"Domain {domain} added"})
     except ValueError as e:
@@ -207,12 +206,11 @@ def update_domain(domain):
         custom_name = data.get('custom_name', '').strip()
         separator = data.get('separator', '_')
         alt_file_names = data.get('alt_file_names', [])
-        file_overrides = data.get('file_overrides', None)
         
         if not new_domain:
             return jsonify({"error": "Domain is required"}), 400
         
-        config.update_domain(domain, new_domain, custom_name or None, separator, alt_file_names, file_overrides)
+        config.update_domain(domain, new_domain, custom_name or None, separator, alt_file_names)
         
         return jsonify({"status": "success", "message": f"Domain {new_domain} updated"})
     except ValueError as e:
@@ -301,6 +299,7 @@ def add_ssh_host():
         password = data.get('password', '')
         cert_path = data.get('cert_path', '').strip()
         use_sudo = data.get('use_sudo', False)
+        file_overrides = data.get('file_overrides', None)
         
         if not all([display_name, hostname, username, password, cert_path]):
             return jsonify({"error": "All fields are required"}), 400
@@ -313,7 +312,7 @@ def add_ssh_host():
             return jsonify({"error": "Invalid port number"}), 400
         
         cert_sync.ssh_config.add_ssh_host(
-            display_name, hostname, port, username, password, cert_path, use_sudo
+            display_name, hostname, port, username, password, cert_path, use_sudo, file_overrides
         )
         
         return jsonify({"status": "success", "message": f"SSH host {display_name} added"})
@@ -342,6 +341,7 @@ def update_ssh_host(display_name):
         password = data.get('password', '')  # Optional - if empty, keep existing
         cert_path = data.get('cert_path', '').strip()
         use_sudo = data.get('use_sudo')  # Optional - if None, keep existing
+        file_overrides = data.get('file_overrides', None)
         
         if not all([new_display_name, hostname, username, cert_path]):
             return jsonify({"error": "Display name, hostname, username, and cert path are required"}), 400
@@ -355,7 +355,7 @@ def update_ssh_host(display_name):
         
         cert_sync.ssh_config.update_ssh_host(
             display_name, new_display_name, hostname, port, username, 
-            password if password else None, cert_path, use_sudo
+            password if password else None, cert_path, use_sudo, file_overrides
         )
         
         return jsonify({"status": "success", "message": f"SSH host {new_display_name} updated"})
