@@ -13,7 +13,7 @@ domains: []
   # Example:
   # - domain: "example.com"
   #   custom_name: "example"
-  #   separator: "_"
+  #   separator: "_"  # Used in default naming: example_cert.pem, example_chain.pem, etc.
   #   alt_names:
   #     - "www.example.com"
   #     - "api.example.com"
@@ -22,6 +22,8 @@ domains: []
   #     chain: "chain.pem"       # Intermediary certificate chain file name
   #     privkey: "privkey.pem"   # Private key file name
   #     fullchain: "fullchain.pem"  # Full chain file name
+  #     # NOTE: When using file_overrides, the custom_name and separator are ignored.
+  #     # Ensure override names are unique across domains to avoid overwriting files.
 
 certificates:
   output_dir: "/app/certificates"

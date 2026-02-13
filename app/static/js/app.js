@@ -374,6 +374,16 @@ function toggleFileOverrides() {
     section.style.display = checkbox.checked ? 'block' : 'none';
 }
 
+// Reset File Overrides fields
+function resetFileOverrides() {
+    document.getElementById('use_file_overrides').checked = false;
+    document.getElementById('cert_filename').value = '';
+    document.getElementById('chain_filename').value = '';
+    document.getElementById('privkey_filename').value = '';
+    document.getElementById('fullchain_filename').value = '';
+    toggleFileOverrides();
+}
+
 // Edit Domain
 function editDomain(domain) {
     // Scroll to form
@@ -398,8 +408,7 @@ function editDomain(domain) {
         document.getElementById('privkey_filename').value = domain.file_overrides.privkey || '';
         document.getElementById('fullchain_filename').value = domain.file_overrides.fullchain || '';
     } else {
-        document.getElementById('use_file_overrides').checked = false;
-        toggleFileOverrides();
+        resetFileOverrides();
     }
     
     // Update UI
@@ -416,8 +425,7 @@ function cancelEditDomain() {
     document.getElementById('original_domain').value = '';
     
     // Reset file overrides section
-    document.getElementById('use_file_overrides').checked = false;
-    toggleFileOverrides();
+    resetFileOverrides();
     
     // Update UI
     document.getElementById('domain-form-title').textContent = 'Add Domain';

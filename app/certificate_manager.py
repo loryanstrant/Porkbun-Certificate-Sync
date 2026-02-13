@@ -103,6 +103,11 @@ class CertificateManager:
                     # Determine file names (use overrides if provided, otherwise use default pattern)
                     if file_overrides:
                         # Use file overrides for custom naming
+                        # NOTE: When file_overrides is used, files are named exactly as specified
+                        # (e.g., "cert.pem", not "domain_cert.pem"). This means:
+                        # 1. The custom_name and separator are ignored when overrides are present
+                        # 2. Multiple domains with the same override names will overwrite each other
+                        # 3. Users should ensure override names are unique across domains to avoid conflicts
                         fullchain_filename = file_overrides.get('fullchain', f"{file_name}{separator}fullchain.pem")
                         key_filename = file_overrides.get('privkey', f"{file_name}{separator}private.key")
                         cert_filename = file_overrides.get('cert', f"{file_name}{separator}cert.pem")
