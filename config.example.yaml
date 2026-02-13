@@ -13,9 +13,15 @@ domains: []
   # Example:
   # - domain: "example.com"
   #   custom_name: "example"
+  #   separator: "_"
   #   alt_names:
   #     - "www.example.com"
   #     - "api.example.com"
+  #   file_overrides:  # Optional: Override file names for this specific domain
+  #     cert: "cert.pem"         # Certificate file name
+  #     chain: "chain.pem"       # Intermediary certificate chain file name
+  #     privkey: "privkey.pem"   # Private key file name
+  #     fullchain: "fullchain.pem"  # Full chain file name
 
 certificates:
   output_dir: "/app/certificates"

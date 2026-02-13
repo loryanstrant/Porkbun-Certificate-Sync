@@ -26,10 +26,39 @@ class CertificateManager:
         self.output_dir = output_dir
         os.makedirs(output_dir, exist_ok=True)
     
+    def _extract_intermediary_certs(self, cert_chain: str) -> str:
+        """
+        Extract intermediary certificates from the full certificate chain.
+        The chain typically contains: leaf cert + intermediate(s) + root (optional)
+        We want to extract everything except the first certificate.
+        
+        Args:
+            cert_chain: Full certificate chain in PEM format
+            
+        Returns:
+            Intermediary certificates as a PEM string (empty if none found)
+        """
+        # Split the chain into individual certificates
+        certs = []
+        chain_parts = cert_chain.split('-----BEGIN CERTIFICATE-----')
+        
+        for part in chain_parts[1:]:  # Skip the first empty part
+            cert_data = '-----BEGIN CERTIFICATE-----' + part
+            if '-----END CERTIFICATE-----' in cert_data:
+                certs.append(cert_data.strip())
+        
+        # Return all certificates except the first one (leaf certificate)
+        if len(certs) > 1:
+            intermediary = '\n'.join(certs[1:])
+            return intermediary
+        else:
+            return ""
+    
     def save_certificate(self, domain: str, cert_chain: str, private_key: str, 
                         public_key: str, custom_name: str = None,
                         formats: List[str] = None, separator: str = "_",
-                        alt_file_names: List[str] = None) -> Dict[str, str]:
+                        alt_file_names: List[str] = None,
+                        file_overrides: Dict[str, str] = None) -> Dict[str, str]:
         """
         Save certificate files
         
@@ -42,6 +71,9 @@ class CertificateManager:
             formats: List of formats to save (pem, crt, key, pfx)
             separator: Separator for file names (_, -, or .)
             alt_file_names: Alternative file name variants to save
+            file_overrides: Optional dict to override specific file names
+                           Keys: 'cert', 'chain', 'privkey', 'fullchain'
+                           Values: custom file names (e.g., 'cert.pem', 'chain.pem')
             
         Returns:
             Dictionary mapping format to file path
@@ -52,8 +84,14 @@ class CertificateManager:
         if alt_file_names is None:
             alt_file_names = []
         
+        if file_overrides is None:
+            file_overrides = {}
+        
         name = custom_name or domain
         saved_files = {}
+        
+        # Extract intermediary certificates from the chain
+        intermediary_certs = self._extract_intermediary_certs(cert_chain)
         
         # Build list of all names to save (primary + alternatives)
         all_names = [name] + alt_file_names
@@ -62,23 +100,45 @@ class CertificateManager:
             for file_name in all_names:
                 # Always save PEM format components
                 if "pem" in formats:
+                    # Determine file names (use overrides if provided, otherwise use default pattern)
+                    if file_overrides:
+                        # Use file overrides for custom naming
+                        fullchain_filename = file_overrides.get('fullchain', f"{file_name}{separator}fullchain.pem")
+                        key_filename = file_overrides.get('privkey', f"{file_name}{separator}private.key")
+                        cert_filename = file_overrides.get('cert', f"{file_name}{separator}cert.pem")
+                        chain_filename = file_overrides.get('chain', f"{file_name}{separator}chain.pem")
+                    else:
+                        # Use default naming pattern
+                        fullchain_filename = f"{file_name}{separator}fullchain.pem"
+                        key_filename = f"{file_name}{separator}private.key"
+                        cert_filename = f"{file_name}{separator}cert.pem"
+                        chain_filename = f"{file_name}{separator}chain.pem"
+                    
                     # Save full chain
-                    fullchain_path = os.path.join(self.output_dir, f"{file_name}{separator}fullchain.pem")
+                    fullchain_path = os.path.join(self.output_dir, fullchain_filename)
                     with open(fullchain_path, 'w') as f:
                         f.write(cert_chain)
                     saved_files[f'{file_name}_fullchain'] = fullchain_path
                     
                     # Save private key
-                    key_path = os.path.join(self.output_dir, f"{file_name}{separator}private.key")
+                    key_path = os.path.join(self.output_dir, key_filename)
                     with open(key_path, 'w') as f:
                         f.write(private_key)
                     saved_files[f'{file_name}_private_key'] = key_path
                     
                     # Save certificate
-                    cert_path = os.path.join(self.output_dir, f"{file_name}{separator}cert.pem")
+                    cert_path = os.path.join(self.output_dir, cert_filename)
                     with open(cert_path, 'w') as f:
                         f.write(public_key)
                     saved_files[f'{file_name}_certificate'] = cert_path
+                    
+                    # Save intermediary certificate chain (if any)
+                    if intermediary_certs:
+                        chain_path = os.path.join(self.output_dir, chain_filename)
+                        with open(chain_path, 'w') as f:
+                            f.write(intermediary_certs)
+                        saved_files[f'{file_name}_chain'] = chain_path
+                        logger.info(f"Saved intermediary certificates to {chain_filename}")
                 
                 # Save as separate .crt and .key files
                 if "crt" in formats:
