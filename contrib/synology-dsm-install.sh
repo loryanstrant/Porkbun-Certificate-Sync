@@ -27,8 +27,17 @@
 set -euo pipefail
 
 CONF="${CERTSYNC_CONF:-/volume1/docker/certsync-dsm/certsync-dsm.env}"
-# shellcheck source=/dev/null
-[ -r "$CONF" ] && . "$CONF"
+if [ -r "$CONF" ]; then
+  # shellcheck source=/dev/null
+  . "$CONF"
+elif [ -e "$CONF" ]; then
+  # Guard: `[ -r x ] && . x` under `set -e` would exit 1 here with no output at all.
+  echo "ERROR: config file exists but is not readable: $CONF (run as root?)" >&2
+  exit 1
+else
+  echo "ERROR: config file not found: $CONF (set \$CERTSYNC_CONF to override)" >&2
+  exit 1
+fi
 
 DSM_URL="${DSM_URL:-http://127.0.0.1:5000}"
 CERT_DIR="${CERT_DIR:-/volume1/certshare}"
@@ -269,19 +278,22 @@ while [ $# -gt 0 ]; do
   shift
 done
 
+# Log the start line before any validation, so that a run which dies in the
+# checks below still leaves a trace -- Task Scheduler discards stdout/stderr
+# unless an output path is configured.
+log "=== run start (dry_run=$DRY_RUN force=$FORCE${ONLY_DOMAIN:+ domain=$ONLY_DOMAIN})"
+
 for bin in curl openssl awk sed; do
   command -v "$bin" >/dev/null 2>&1 || die "required command not found: $bin"
 done
 
-: "${DSM_USER:?DSM_USER is not set (expected in $CONF)}"
-: "${DSM_PASS:?DSM_PASS is not set (expected in $CONF)}"
-[ -n "$CERT_MAP" ] || die "CERT_MAP is not set (expected in $CONF)"
-[ -d "$CERT_DIR" ] || die "certificate directory not found: $CERT_DIR"
+[ -n "${DSM_USER:-}" ] || die "DSM_USER is not set (expected in $CONF)"
+[ -n "${DSM_PASS:-}" ] || die "DSM_PASS is not set (expected in $CONF)"
+[ -n "$CERT_MAP" ]     || die "CERT_MAP is not set (expected in $CONF)"
+[ -d "$CERT_DIR" ]     || die "certificate directory not found: $CERT_DIR"
 
 TMPDIR_="$(mktemp -d)"
 chmod 700 "$TMPDIR_"
-
-log "=== run start (dry_run=$DRY_RUN force=$FORCE${ONLY_DOMAIN:+ domain=$ONLY_DOMAIN})"
 
 api_login
 api_cert_list
