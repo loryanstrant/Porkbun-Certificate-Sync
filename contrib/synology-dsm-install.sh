@@ -46,6 +46,15 @@ LOG_FILE="${LOG_FILE:-/volume1/docker/certsync-dsm/install.log}"
 #   CERT_MAP="strant.casa=NVlrGh strant.com=cqL39M"
 CERT_MAP="${CERT_MAP:-}"
 
+# Network tunables. DSM login latency is wildly variable: on a DS920+ the same
+# call has been measured at 1s, 29s and 62s within one evening. Since login
+# gates the whole run, the timeout is deliberately generous -- a scheduled task
+# can afford to wait, but not to fail.
+LOGIN_TIMEOUT="${LOGIN_TIMEOUT:-120}"
+LOGIN_ATTEMPTS="${LOGIN_ATTEMPTS:-2}"
+LOGIN_RETRY_DELAY="${LOGIN_RETRY_DELAY:-10}"
+IMPORT_TIMEOUT="${IMPORT_TIMEOUT:-180}"
+
 DRY_RUN=0
 FORCE=0
 ONLY_DOMAIN=""
@@ -91,9 +100,8 @@ json_field() { # <record> <field>
 # DSM API
 # ---------------------------------------------------------------------------
 
-api_login() {
-  local resp
-  resp="$(curl -sS --max-time 30 -c "$TMPDIR_/cookies" -G "$DSM_URL/webapi/entry.cgi" \
+_login_attempt() {
+  curl -sS --max-time "$LOGIN_TIMEOUT" -c "$TMPDIR_/cookies" -G "$DSM_URL/webapi/entry.cgi" \
     --data-urlencode 'api=SYNO.API.Auth' \
     --data-urlencode 'version=7' \
     --data-urlencode 'method=login' \
@@ -101,22 +109,46 @@ api_login() {
     --data-urlencode "passwd=$DSM_PASS" \
     --data-urlencode 'session=CertMgr' \
     --data-urlencode 'format=cookie' \
-    --data-urlencode 'enable_syno_token=yes')" || die "login request failed"
+    --data-urlencode 'enable_syno_token=yes'
+}
 
-  SID="$(json_field "$resp" sid)"
-  TOKEN="$(json_field "$resp" synotoken)"
+# Login is the call everything else depends on, and it has been observed taking
+# 29s on a loaded DS920+ -- hence the generous timeout and one retry. Permanent
+# failures (bad password, 2FA) are NEVER retried: repeated auth failures count
+# towards DSM's auto-block threshold.
+api_login() {
+  local resp code why attempt=1 rc started=$SECONDS
 
-  if [ -z "$SID" ]; then
-    local code
+  while :; do
+    rc=0
+    resp="$(_login_attempt)" || rc=$?
+
+    SID="$(json_field "$resp" sid)"
+    TOKEN="$(json_field "$resp" synotoken)"
+    [ -n "$SID" ] && break
+
     code="$(printf '%s' "$resp" | sed -n 's/.*"code" *: *\([0-9]*\).*/\1/p')"
     case "$code" in
       400|401) die "login failed: bad DSM_USER/DSM_PASS (error $code)" ;;
       403|404) die "login failed: account requires 2FA/OTP (error $code) -- use an account with 2FA disabled" ;;
-      *)       die "login failed (error ${code:-unknown})" ;;
     esac
-  fi
+
+    if [ "$rc" -ne 0 ]; then
+      why="curl exit $rc -- DSM slow or unreachable at $DSM_URL"
+    else
+      why="error ${code:-unknown}"
+    fi
+
+    if [ "$attempt" -ge "$LOGIN_ATTEMPTS" ]; then
+      die "login failed after $attempt attempt(s): $why"
+    fi
+    log "login attempt $attempt failed ($why) -- retrying in ${LOGIN_RETRY_DELAY}s"
+    attempt=$((attempt + 1))
+    sleep "$LOGIN_RETRY_DELAY"
+  done
+
   [ -n "$TOKEN" ] || die "login succeeded but DSM returned no SynoToken; cannot make write calls"
-  log "authenticated to DSM as $DSM_USER"
+  log "authenticated to DSM as $DSM_USER (login took $((SECONDS - started))s)"
 }
 
 api_logout() {
@@ -239,7 +271,7 @@ process_domain() { # <domain> <cert_id>
   as_default=false
   [ "$is_default" = yes ] && as_default=true
 
-  resp="$(curl -sS --max-time 120 -b "$TMPDIR_/cookies" \
+  resp="$(curl -sS --max-time "$IMPORT_TIMEOUT" -b "$TMPDIR_/cookies" \
     -H "X-SYNO-TOKEN: $TOKEN" \
     -F "key=@$key" \
     -F "cert=@$work/cert.pem" \

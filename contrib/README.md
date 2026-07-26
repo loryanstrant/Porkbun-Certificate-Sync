@@ -66,6 +66,22 @@ Idempotent: it compares the synced leaf's `notAfter` against the installed certi
 self-healing. Exit code is `0` on success (including "nothing to do") and `1` on any failure,
 so Task Scheduler's "notify on abnormal termination" will catch problems.
 
+### Timeouts
+
+DSM login latency is wildly variable — on a DS920+ the same call was measured at **1s, 29s and
+62s within one evening**, so short timeouts here are a trap. Login gates the whole run, so it
+gets a generous timeout plus one retry. Overridable in the env file:
+
+| Variable | Default | Purpose |
+|---|---|---|
+| `LOGIN_TIMEOUT` | `120` | Per-attempt login timeout, seconds. |
+| `LOGIN_ATTEMPTS` | `2` | Total login attempts. Permanent failures (bad password, 2FA) are never retried, so a typo can't burn attempts towards DSM's auto-block. |
+| `LOGIN_RETRY_DELAY` | `10` | Seconds between login attempts. |
+| `IMPORT_TIMEOUT` | `180` | Import timeout — a real import rebinds services and reloads nginx. |
+
+The login duration is logged on every run (`authenticated to DSM as x (login took 3s)`) so
+worsening latency is visible rather than something you discover when a run finally times out.
+
 ## Two gotchas this script exists to handle
 
 1. **`<domain>.cert.pem` is not a certificate.** The app writes Porkbun's `publickey` API
