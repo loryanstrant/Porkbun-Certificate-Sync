@@ -11,4 +11,39 @@ services:
       - ./config:/app/config
     environment:
       - CONFIG_PATH=/app/config/config.yaml
+      # Authentication is mandatory. On first start the web interface redirects
+      # to /setup so you can create the administrator account. Everything below
+      # is optional.
+      #
+      # Pre-seed the account for unattended deployments (first start only).
+      # WARNING: anyone who can run `docker inspect` can read these values;
+      # prefer ADMIN_PASSWORD_HASH, or just use the /setup page.
+      # - ADMIN_USERNAME=admin
+      # - ADMIN_PASSWORD=choose-a-long-password
+      # - ADMIN_PASSWORD_HASH=scrypt:32768:8:1$...
+      #
+      # The session signing key is generated automatically and persisted to
+      # /app/config/.secret_key. Set it explicitly only if you want to control
+      # it yourself -- changing it signs everyone out.
+      # - SECRET_KEY=
+      #
+      # Set to false if you serve the UI over plain HTTP and sign-in appears to
+      # succeed but bounces straight back to the login page. Default 'auto'
+      # marks the cookie Secure only on HTTPS requests.
+      # - SESSION_COOKIE_SECURE=false
+      #
+      # Required behind a reverse proxy so HTTPS detection and per-client
+      # lockout see the real client rather than the proxy.
+      # - TRUST_PROXY_HEADERS=1
+      #
+      # How long a session lasts without activity (hours, default 12).
+      # - SESSION_LIFETIME_HOURS=12
     restart: unless-stopped
+    healthcheck:
+      # /health is the only endpoint that does not require signing in, so use it
+      # rather than / for health checks and uptime monitors.
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:5000/health')"]
+      interval: 60s
+      timeout: 10s
+      retries: 3
+      start_period: 15s

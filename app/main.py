@@ -4,6 +4,7 @@ Main Flask application for Porkbun Certificate Sync
 import os
 import logging
 from flask import Flask, render_template, request, jsonify, redirect, url_for, flash
+from .auth import init_auth
 from .config import Config
 from .sync import CertificateSync
 from .porkbun_api import PorkbunAPI
@@ -17,23 +18,25 @@ logger = logging.getLogger(__name__)
 
 # Initialize Flask app
 app = Flask(__name__)
-# Generate a random secret key if not provided in production
-secret_key = os.environ.get('SECRET_KEY')
-if not secret_key:
-    import secrets
-    secret_key = secrets.token_hex(32)
-    logger.warning("No SECRET_KEY environment variable set. Using randomly generated key. Sessions will not persist across restarts.")
-app.secret_key = secret_key
 
 # Initialize configuration and sync
 config = Config()
 cert_sync = CertificateSync(config)
 
-# Start scheduler if configured
-try:
-    cert_sync.start_scheduler()
-except Exception as e:
-    logger.error(f"Failed to start scheduler: {e}")
+# Authentication is mandatory and has no bypass. init_auth() resolves the session
+# signing key, hardens the session cookie and installs the app-wide request gate.
+init_auth(app, config)
+
+# Start scheduler if configured. The scheduled sync runs in a background thread
+# with no request context and is deliberately NOT gated by authentication, so
+# certificates keep renewing even before an admin account has been created.
+if os.environ.get('DISABLE_SCHEDULER', '').lower() in ('1', 'true', 'yes'):
+    logger.info("DISABLE_SCHEDULER is set; not starting the background scheduler")
+else:
+    try:
+        cert_sync.start_scheduler()
+    except Exception as e:
+        logger.error(f"Failed to start scheduler: {e}")
 
 
 def sanitize_error_message(error: Exception) -> str:
@@ -420,7 +423,9 @@ def test_ssh_connection():
         # If password is provided, verify it, otherwise try to use stored password
         if password:
             if not cert_sync.ssh_config.verify_password(display_name, password):
-                return jsonify({"error": "Invalid password"}), 401
+                # 403, not 401: the *request* is authenticated, it is the supplied
+                # SSH host password that is wrong. Keeps 401 meaning "sign in".
+                return jsonify({"error": "Invalid password"}), 403
             test_password = password
         else:
             # Try to use stored password

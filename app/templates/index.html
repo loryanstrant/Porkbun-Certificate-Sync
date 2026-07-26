@@ -3,13 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>Porkbun Certificate Sync</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body>
     <div class="container">
         <header>
-            <div style="display: flex; justify-content: space-between; align-items: center;">
+            <div class="header-row">
                 <div>
                     <h1>🔐 Porkbun Certificate Sync</h1>
                     <p>Manage SSL certificates from Porkbun</p>
@@ -26,6 +27,7 @@
             <button class="tab-button" onclick="openTab('distribution')">🚀 Distribution</button>
             <button class="tab-button" onclick="openTab('logs')">📋 Logs</button>
             <button class="tab-button" onclick="openTab('sync')">🔄 Sync</button>
+            <button class="tab-button" onclick="openTab('security')">🛡️ Security</button>
         </div>
 
         <!-- Settings Tab -->
@@ -343,6 +345,136 @@
             </div>
         </div>
 
+        <!-- Security Tab -->
+        <div id="security" class="tab-content">
+            <div class="section">
+                <h2>Account</h2>
+                <p class="status-indicator">
+                    <span class="status-glyph" aria-hidden="true">👤</span>
+                    <span class="status-text">Signed in as <strong id="account-username">…</strong></span>
+                </p>
+                <p class="status-indicator">
+                    <span class="status-glyph" aria-hidden="true">🕓</span>
+                    <span class="status-text">Password last changed: <span id="password-updated-at">…</span></span>
+                </p>
+
+                <h3>Change password</h3>
+                <form id="change-password-form">
+                    <div class="form-group">
+                        <label for="current-password">Current password</label>
+                        <input type="password" id="current-password" autocomplete="current-password" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="new-password">New password</label>
+                        <input type="password" id="new-password" autocomplete="new-password" required>
+                        <small>At least 12 characters. Every other signed-in session will be ended.</small>
+                    </div>
+                    <div class="form-group">
+                        <label for="new-password-confirm">Confirm new password</label>
+                        <input type="password" id="new-password-confirm" autocomplete="new-password" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Change password</button>
+                </form>
+            </div>
+
+            <div class="section">
+                <h2>Two-Factor Authentication</h2>
+                <p class="status-indicator" id="totp-status">
+                    <span class="status-glyph" aria-hidden="true">○</span>
+                    <span class="status-text">Two-factor authentication: <strong>Loading…</strong></span>
+                </p>
+
+                <!-- Disabled: offer enrolment -->
+                <div id="totp-enrol-start" class="hidden">
+                    <p>
+                        Add a second step to sign-in using an authenticator app such as
+                        Aegis, Bitwarden, 1Password or Google Authenticator.
+                    </p>
+                    <form id="totp-begin-form">
+                        <div class="form-group">
+                            <label for="totp-begin-password">Confirm your password to continue</label>
+                            <input type="password" id="totp-begin-password" autocomplete="current-password" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Set up two-factor authentication</button>
+                    </form>
+                </div>
+
+                <!-- Pending: QR + verify -->
+                <div id="totp-enrol-pending" class="hidden">
+                    <p>Scan this code with your authenticator app, then enter the 6-digit code it shows.</p>
+                    <div class="qr-box">
+                        <img id="totp-qr" alt="QR code for two-factor enrolment" width="220" height="220">
+                    </div>
+                    <p class="totp-secret-line">
+                        Can't scan it? Enter this key manually:
+                        <code id="totp-secret" class="selectable">…</code>
+                    </p>
+                    <form id="totp-confirm-form">
+                        <div class="form-group">
+                            <label for="totp-confirm-code">Code from your app</label>
+                            <input type="text" id="totp-confirm-code" inputmode="numeric"
+                                   pattern="[0-9]*" maxlength="6" autocomplete="one-time-code"
+                                   placeholder="123456" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Verify and enable</button>
+                        <button type="button" class="btn btn-secondary" id="totp-cancel">Cancel</button>
+                    </form>
+                </div>
+
+                <!-- Enabled: offer disable -->
+                <div id="totp-enrol-enabled" class="hidden">
+                    <form id="totp-disable-form">
+                        <div class="form-group">
+                            <label for="totp-disable-password">Confirm your password to turn it off</label>
+                            <input type="password" id="totp-disable-password" autocomplete="current-password" required>
+                        </div>
+                        <button type="submit" class="btn btn-danger">Disable two-factor authentication</button>
+                    </form>
+                </div>
+            </div>
+
+            <div class="section" id="recovery-section">
+                <h2>Recovery Codes</h2>
+                <p class="status-indicator" id="recovery-status">
+                    <span class="status-glyph" aria-hidden="true">○</span>
+                    <span class="status-text">Recovery codes: <strong>None yet</strong></span>
+                </p>
+                <p>
+                    Recovery codes let you sign in if you lose your authenticator.
+                    Each one works once.
+                </p>
+
+                <div id="recovery-codes-display" class="hidden">
+                    <p class="auth-message" role="status">
+                        <span aria-hidden="true">⚠</span>
+                        These codes are shown once only. Save them somewhere safe now.
+                    </p>
+                    <pre id="recovery-codes-list" class="recovery-codes selectable"></pre>
+                    <button type="button" class="btn" id="copy-recovery-codes">📋 Copy</button>
+                    <button type="button" class="btn" id="download-recovery-codes">💾 Download</button>
+                    <button type="button" class="btn btn-secondary" id="dismiss-recovery-codes">Done</button>
+                </div>
+
+                <form id="recovery-regenerate-form" class="hidden">
+                    <div class="form-group">
+                        <label for="recovery-password">Confirm your password to generate new codes</label>
+                        <input type="password" id="recovery-password" autocomplete="current-password" required>
+                        <small>Generating new codes invalidates the previous set.</small>
+                    </div>
+                    <button type="submit" class="btn">Generate new recovery codes</button>
+                </form>
+            </div>
+
+            <div class="section">
+                <h2>Session</h2>
+                <!-- A real POST form: a GET logout could be triggered by any <img src>. -->
+                <form method="post" action="{{ url_for('auth.logout') }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button type="submit" class="btn">🚪 Sign out</button>
+                </form>
+            </div>
+        </div>
+
         <footer>
             <p>Porkbun Certificate Sync | <a href="https://github.com/loryanstrant/Porkbun-Certificate-Sync" target="_blank">GitHub</a></p>
         </footer>
@@ -350,6 +482,8 @@
 
     <div id="notification" class="notification"></div>
 
+    <script src="{{ url_for('static', filename='js/theme.js') }}"></script>
     <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/security.js') }}"></script>
 </body>
 </html>

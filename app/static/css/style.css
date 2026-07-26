@@ -830,3 +830,230 @@ body.dark-mode .file-overrides-box h4 {
 body.dark-mode .file-overrides-info {
     color: #4cc9f0;
 }
+
+/* ==========================================================================
+   Authentication pages, Security tab, and status indicators
+   ========================================================================== */
+
+/* Generic visibility helper used by the Security tab and the login page. */
+.hidden {
+    display: none !important;
+}
+
+/* Applied by an inline <head> script before first paint so a dark-mode user
+   does not get a flash of the light gradient. */
+html.dark-mode-preload,
+html.dark-mode-preload body {
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+}
+
+/* Replaces the inline flex styles the dashboard header used to carry. */
+.header-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.auth-container {
+    max-width: 520px;
+}
+
+.auth-card h2 {
+    margin-bottom: 15px;
+}
+
+.auth-card h3 {
+    margin-top: 25px;
+    margin-bottom: 10px;
+}
+
+.auth-hint {
+    margin-bottom: 20px;
+    color: #555;
+}
+
+.auth-footnote {
+    margin-top: 20px;
+    font-size: 0.9em;
+}
+
+.auth-notes {
+    margin-top: 25px;
+    padding-top: 20px;
+    border-top: 1px solid #e0e0e0;
+    font-size: 0.9em;
+    color: #555;
+}
+
+.auth-notes p {
+    margin-bottom: 10px;
+}
+
+/* Errors and confirmations carry an icon plus wording, so they never depend on
+   colour alone to be understood. */
+.auth-error,
+.auth-message {
+    padding: 12px 15px;
+    border-radius: 6px;
+    margin-bottom: 20px;
+    border-left: 4px solid;
+}
+
+.auth-error {
+    background: #fdecea;
+    border-left-color: #c0392b;
+    color: #7b241c;
+}
+
+.auth-message {
+    background: #eafaf1;
+    border-left-color: #1e8449;
+    color: #145a32;
+}
+
+/* Status indicators: the glyph carries the state, the wording repeats it, and
+   colour is only ever a third, redundant cue. */
+.status-indicator {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    margin-bottom: 12px;
+    line-height: 1.5;
+}
+
+.status-glyph {
+    font-size: 1.1em;
+    flex-shrink: 0;
+}
+
+.status-on .status-glyph {
+    color: #1e8449;
+}
+
+.status-pending .status-glyph {
+    color: #b9770e;
+}
+
+.status-off .status-glyph {
+    color: #7f8c8d;
+}
+
+.qr-box {
+    display: inline-block;
+    padding: 12px;
+    background: #ffffff;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    margin: 15px 0;
+}
+
+.qr-box img {
+    display: block;
+}
+
+.totp-secret-line {
+    margin-bottom: 20px;
+}
+
+.totp-secret-line code,
+.selectable {
+    user-select: all;
+    -webkit-user-select: all;
+}
+
+.totp-secret-line code {
+    display: inline-block;
+    padding: 4px 8px;
+    background: #f4f6f7;
+    border-radius: 4px;
+    font-size: 1.05em;
+    letter-spacing: 1px;
+    word-break: break-all;
+}
+
+.recovery-codes {
+    background: #f4f6f7;
+    border: 1px solid #e0e0e0;
+    border-radius: 6px;
+    padding: 15px;
+    margin: 15px 0;
+    font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+    font-size: 1.05em;
+    line-height: 1.8;
+    letter-spacing: 1px;
+    white-space: pre;
+    overflow-x: auto;
+}
+
+.btn-secondary {
+    background: #7f8c8d;
+    color: white;
+}
+
+.btn-secondary:hover {
+    background: #6c7a7a;
+}
+
+/* Dark mode overrides */
+body.dark-mode .auth-hint,
+body.dark-mode .auth-notes {
+    color: #b8b8b8;
+}
+
+body.dark-mode .auth-notes {
+    border-top-color: #16213e;
+}
+
+body.dark-mode .auth-error {
+    background: #3d1f1d;
+    border-left-color: #e74c3c;
+    color: #f5b7b1;
+}
+
+body.dark-mode .auth-message {
+    background: #14332a;
+    border-left-color: #2ecc71;
+    color: #a9dfbf;
+}
+
+body.dark-mode .status-on .status-glyph {
+    color: #2ecc71;
+}
+
+body.dark-mode .status-pending .status-glyph {
+    color: #f39c12;
+}
+
+body.dark-mode .status-off .status-glyph {
+    color: #95a5a6;
+}
+
+/* The QR code needs a light quiet zone to stay scannable in dark mode. */
+body.dark-mode .qr-box {
+    background: #ffffff;
+    border-color: #16213e;
+}
+
+body.dark-mode .totp-secret-line code,
+body.dark-mode .recovery-codes {
+    background: #1a1a2e;
+    border-color: #16213e;
+    color: #e8e8e8;
+}
+
+body.dark-mode .btn-secondary {
+    background: #4a5568;
+}
+
+body.dark-mode .btn-secondary:hover {
+    background: #5a6578;
+}
+
+/* Give the Security tab's forms room after the heading or status line above. */
+#security form {
+    margin-top: 18px;
+}
+
+#security h3 + form {
+    margin-top: 10px;
+}

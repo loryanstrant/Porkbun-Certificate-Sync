@@ -4,6 +4,35 @@
 # Note: SSH passwords are encrypted using a key stored in .encryption_key
 # in the same directory as this config file. This ensures passwords persist
 # across container updates as long as the config volume is mounted.
+#
+# The `auth` section is written and maintained by the application -- do not add
+# it by hand. Leave it out of this file entirely and create your account through
+# the /setup page on first start.
+
+# auth:
+#   version: 1
+#   users:
+#     - id: "usr_..."                  # stable internal id
+#       username: "admin"
+#       password_digest: "scrypt:..."  # scrypt hash; never reversible
+#       password_updated_at: "..."
+#       credential_version: 1          # bumped to end all other sessions
+#       roles: ["admin"]
+#       created_at: "..."
+#       last_login_at: "..."
+#       totp:
+#         enabled: false
+#         secret_encrypted: ""         # encrypted with .encryption_key
+#         algorithm: "SHA1"
+#         digits: 6
+#         period: 30
+#         confirmed_at: null
+#         last_counter: null           # blocks code replay
+#         recovery_codes: []           # single-use, stored hashed
+#
+# Lost the password and all recovery codes? Stop the container, delete the whole
+# `auth:` block from config/config.yaml, restart, and the app returns to /setup.
+# Every other setting is preserved.
 
 api:
   api_key: ""

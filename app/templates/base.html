@@ -1,0 +1,44 @@
+{# Shell for the standalone auth pages (login, setup).
+
+   index.html predates this template and still carries its own full shell; it is
+   deliberately left alone rather than retrofitted, since converting a 355-line
+   block-free page is a large diff with no user-visible benefit.
+   TODO: migrate index.html onto this base when it next needs restructuring. #}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    <title>{% block title %}Porkbun Certificate Sync{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <script>
+      // Applied before first paint so the page does not flash light-on-dark.
+      try {
+        if (localStorage.getItem('darkMode') === 'enabled') {
+          document.documentElement.classList.add('dark-mode-preload');
+        }
+      } catch (e) { /* localStorage unavailable (private mode) */ }
+    </script>
+</head>
+<body>
+    <div class="container auth-container">
+        <header>
+            <div class="header-row">
+                <div>
+                    <h1>🔐 Porkbun Certificate Sync</h1>
+                    <p>{% block subtitle %}Manage SSL certificates from Porkbun{% endblock %}</p>
+                </div>
+                <button id="dark-mode-toggle" class="dark-mode-btn" onclick="toggleDarkMode()" aria-label="Toggle dark mode">
+                    <span id="dark-mode-icon">🌙</span>
+                </button>
+            </div>
+        </header>
+
+        {% block content %}{% endblock %}
+    </div>
+
+    <script src="{{ url_for('static', filename='js/theme.js') }}"></script>
+    {% block scripts %}{% endblock %}
+</body>
+</html>
