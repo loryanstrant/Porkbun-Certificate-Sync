@@ -75,6 +75,30 @@ so Task Scheduler's "notify on abnormal termination" will catch problems.
 2. **`X-SYNO-TOKEN` is required on every call, not just writes.** Once a session is created
    with `enable_syno_token=yes`, omitting the header on even a read returns error `119`.
 
+## DSM API notes (learned the hard way against DSM 7.3.2)
+
+Useful if you extend this or automate the Task Scheduler entry:
+
+* **`X-SYNO-TOKEN` on every call.** Once you log in with `enable_syno_token=yes`, *all*
+  subsequent calls need the header — even reads. Omitting it returns `119`.
+* **Never import in "create" mode from automation.** With an empty `id`, DSM creates a new
+  certificate **and promotes it to default**, ignoring `as_default=false`. This script always
+  requires an existing ID and aborts if it isn't found, so it can't do that.
+* **DSM will not delete the default certificate** — `method=delete` returns
+  `{"success":true}` and silently does nothing. Reassign the default first.
+* **Setting the default** is `SYNO.Core.Certificate.CRT` `method=set` with `id=<id>`,
+  `desc=<desc>` and `as_default=true`. Note `set` takes `id` (singular) while `delete` takes
+  `ids=["..."]`; using the wrong one returns `5503`.
+* **Root-owned scheduled tasks** must be created via **`SYNO.Core.TaskScheduler.Root`**
+  (`SYNO.Core.TaskScheduler` returns `4800 "Root need run on ..."`), and that requires an
+  elevated session: POST `SYNO.Core.User.PasswordConfirm` v2 `method=auth` to get a
+  `SynoConfirmPWToken` and pass it along. Omit `monthly_week` from `schedule` or you get
+  `4800 "monthly_week not supported"`. `.Root` implements only `create`/`set` — and
+  `run`/`delete` on the non-Root API **report success but silently no-op** on root-owned
+  tasks, so trigger and delete those from the DSM UI.
+* Import errors worth recognising: `5511` missing/invalid certificate data, `5517` the
+  supplied `inter_cert` does not actually sign the leaf.
+
 ## Safety checks before any import
 
 The script refuses to proceed — rather than break TLS for every bound service — if:
