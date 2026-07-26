@@ -1,3 +1,89 @@
+// ---------------------------------------------------------------------------
+// Authenticated API access
+//
+// Every request to the app goes through apiFetch() rather than fetch() so there
+// is exactly one place that attaches the CSRF token and reacts to an expired
+// session. Two of the original call sites passed no headers object at all, so
+// per-site edits would have been easy to get subtly wrong.
+// ---------------------------------------------------------------------------
+
+const CSRF_SAFE_METHODS = ['GET', 'HEAD', 'OPTIONS'];
+let sessionExpiredHandled = false;
+
+function getCsrfToken() {
+    const meta = document.querySelector('meta[name="csrf-token"]');
+    return meta ? meta.content : '';
+}
+
+function setCsrfToken(token) {
+    const meta = document.querySelector('meta[name="csrf-token"]');
+    if (meta && token) {
+        meta.content = token;
+    }
+}
+
+function handleSessionExpired(setupRequired) {
+    // Many in-flight requests can fail at once (the sync poller especially), so
+    // this must only ever run once.
+    if (sessionExpiredHandled) return;
+    sessionExpiredHandled = true;
+
+    stopSyncPolling();
+
+    const notification = document.getElementById('notification');
+    if (notification) {
+        notification.textContent = setupRequired
+            ? '⚠ Setup is not complete. Redirecting…'
+            : '⚠ Your session has expired. Redirecting to sign in…';
+        notification.className = 'notification error show';
+    }
+
+    const target = setupRequired
+        ? '/setup'
+        : '/login?next=' + encodeURIComponent(window.location.pathname + window.location.search);
+    setTimeout(() => { window.location.href = target; }, 1500);
+}
+
+async function apiFetch(url, options = {}) {
+    const opts = Object.assign({ credentials: 'same-origin' }, options);
+    opts.headers = Object.assign({}, options.headers || {});
+
+    const method = (opts.method || 'GET').toUpperCase();
+    if (!CSRF_SAFE_METHODS.includes(method)) {
+        opts.headers['X-CSRF-Token'] = getCsrfToken();
+    }
+
+    const response = await fetch(url, opts);
+
+    if (response.status === 401 || response.status === 403 || response.status === 503) {
+        let marker = null;
+        try {
+            marker = await response.clone().json();
+        } catch (e) {
+            marker = null;
+        }
+
+        // Keyed on the marker field, never on the bare status code: POST
+        // /api/distribution/test answers 403 for a wrong SSH host password and
+        // must fall straight through to its own error handling.
+        if (marker && (marker.auth_required || marker.setup_required)) {
+            handleSessionExpired(Boolean(marker.setup_required));
+            throw new Error('Session expired');
+        }
+
+        if (marker && marker.csrf_failed && !options._csrfRetried) {
+            const refreshed = await fetch('/api/csrf-token', { credentials: 'same-origin' });
+            if (refreshed.ok) {
+                const data = await refreshed.json();
+                setCsrfToken(data.csrf_token);
+                return apiFetch(url, Object.assign({}, options, { _csrfRetried: true }));
+            }
+        }
+    }
+
+    return response;
+}
+
 // Tab Management
 function openTab(tabName) {
     const tabContents = document.querySelectorAll('.tab-content');
@@ -20,6 +106,8 @@ function openTab(tabName) {
         loadSSHHosts();
     } else if (tabName === 'logs') {
         loadDistributionLogs();
+    } else if (tabName === 'security') {
+        loadSecurityTab();
     }
 }
 
@@ -37,7 +125,7 @@ function showNotification(message, type = 'success') {
 // Load Settings
 async function loadSettings() {
     try {
-        const response = await fetch('/api/settings');
+        const response = await apiFetch('/api/settings');
         const data = await response.json();
         
         if (data.error) {
@@ -208,7 +296,7 @@ document.getElementById('api-form').addEventListener('submit', async (e) => {
     };
     
     try {
-        const response = await fetch('/api/settings/api', {
+        const response = await apiFetch('/api/settings/api', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(data)
@@ -245,7 +333,7 @@ document.getElementById('cert-form').addEventListener('submit', async (e) => {
     };
     
     try {
-        const response = await fetch('/api/settings/certificates', {
+        const response = await apiFetch('/api/settings/certificates', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(data)
@@ -276,7 +364,7 @@ document.getElementById('schedule-form').addEventListener('submit', async (e) =>
     };
     
     try {
-        const response = await fetch('/api/settings/schedule', {
+        const response = await apiFetch('/api/settings/schedule', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(data)
@@ -317,13 +405,13 @@ document.getElementById('domain-form').addEventListener('submit', async (e) => {
     try {
         let response;
         if (editMode) {
-            response = await fetch(`/api/domains/${encodeURIComponent(originalDomain)}`, {
+            response = await apiFetch(`/api/domains/${encodeURIComponent(originalDomain)}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(data)
             });
         } else {
-            response = await fetch('/api/domains', {
+            response = await apiFetch('/api/domains', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(data)
@@ -402,7 +490,7 @@ async function loadDomains() {
     const domainsList = document.getElementById('domains-list');
     
     try {
-        const response = await fetch('/api/domains');
+        const response = await apiFetch('/api/domains');
         const data = await response.json();
         
         if (data.error) {
@@ -444,7 +532,7 @@ async function removeDomain(domain) {
     }
     
     try {
-        const response = await fetch(`/api/domains/${encodeURIComponent(domain)}`, {
+        const response = await apiFetch(`/api/domains/${encodeURIComponent(domain)}`, {
             method: 'DELETE'
         });
         
@@ -470,7 +558,7 @@ async function triggerSync() {
     button.textContent = '⏳ Syncing...';
     
     try {
-        const response = await fetch('/api/sync', {
+        const response = await apiFetch('/api/sync', {
             method: 'POST'
         });
         
@@ -495,7 +583,7 @@ async function triggerSync() {
 // Load Sync Status
 async function loadSyncStatus() {
     try {
-        const response = await fetch('/api/sync/status');
+        const response = await apiFetch('/api/sync/status');
         const data = await response.json();
         
         if (data.error) {
@@ -536,44 +624,28 @@ async function loadSyncStatus() {
     }
 }
 
-// Auto-refresh sync status when on sync tab
-setInterval(() => {
+// Auto-refresh sync status when on sync tab. The handle matters: on session
+// expiry this has to be stopped, or the page hammers /login every 5 seconds.
+let syncPollTimer = setInterval(() => {
     const syncTab = document.getElementById('sync');
-    if (syncTab.classList.contains('active')) {
+    if (syncTab && syncTab.classList.contains('active')) {
         loadSyncStatus();
     }
 }, 5000);
 
-// Dark Mode Toggle
-function toggleDarkMode() {
-    const body = document.body;
-    const icon = document.getElementById('dark-mode-icon');
-    
-    body.classList.toggle('dark-mode');
-    
-    // Update icon
-    if (body.classList.contains('dark-mode')) {
-        icon.textContent = '☀️';
-        localStorage.setItem('darkMode', 'enabled');
-    } else {
-        icon.textContent = '🌙';
-        localStorage.setItem('darkMode', 'disabled');
+function stopSyncPolling() {
+    if (syncPollTimer) {
+        clearInterval(syncPollTimer);
+        syncPollTimer = null;
     }
 }
 
-// Load dark mode preference on page load
-(function() {
-    const darkMode = localStorage.getItem('darkMode');
-    if (darkMode === 'enabled') {
-        document.body.classList.add('dark-mode');
-        document.getElementById('dark-mode-icon').textContent = '☀️';
-    }
-})();
+// Dark mode lives in theme.js, which is shared with the login and setup pages.
 
 // SSH Host Management
 async function loadSSHHosts() {
     try {
-        const response = await fetch('/api/ssh-hosts');
+        const response = await apiFetch('/api/ssh-hosts');
         const data = await response.json();
         
         if (data.error) {
@@ -699,13 +771,13 @@ document.getElementById('ssh-host-form').addEventListener('submit', async (e) =>
     try {
         let response;
         if (editMode) {
-            response = await fetch(`/api/ssh-hosts/${encodeURIComponent(originalDisplayName)}`, {
+            response = await apiFetch(`/api/ssh-hosts/${encodeURIComponent(originalDisplayName)}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(formData)
             });
         } else {
-            response = await fetch('/api/ssh-hosts', {
+            response = await apiFetch('/api/ssh-hosts', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(formData)
@@ -736,7 +808,7 @@ document.getElementById('ssh-host-form').addEventListener('submit', async (e) =>
 
 async function editSSHHost(displayName) {
     try {
-        const response = await fetch('/api/ssh-hosts');
+        const response = await apiFetch('/api/ssh-hosts');
         const data = await response.json();
         
         const host = data.hosts.find(h => h.display_name === displayName);
@@ -801,7 +873,7 @@ async function deleteSSHHost(displayName) {
     }
     
     try {
-        const response = await fetch(`/api/ssh-hosts/${encodeURIComponent(displayName)}`, {
+        const response = await apiFetch(`/api/ssh-hosts/${encodeURIComponent(displayName)}`, {
             method: 'DELETE'
         });
         
@@ -826,7 +898,7 @@ async function loadDistributionLogs() {
         const eventType = document.getElementById('log-filter').value;
         const url = eventType ? `/api/distribution/logs?event_type=${eventType}` : '/api/distribution/logs';
         
-        const response = await fetch(url);
+        const response = await apiFetch(url);
         const data = await response.json();
         
         if (data.error) {

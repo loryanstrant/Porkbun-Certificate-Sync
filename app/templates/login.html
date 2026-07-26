@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+{% block title %}Sign in · Porkbun Certificate Sync{% endblock %}
+{% block subtitle %}Sign in to continue{% endblock %}
+
+{% block content %}
+<div class="section auth-card">
+    {% if error %}
+    <p class="auth-error" role="alert"><span aria-hidden="true">⚠</span> {{ error }}</p>
+    {% endif %}
+    {% if message %}
+    <p class="auth-message" role="status"><span aria-hidden="true">✓</span> {{ message }}</p>
+    {% endif %}
+
+    {% if stage == 'totp' %}
+    <h2>Two-factor authentication</h2>
+    <p class="auth-hint">Enter the 6-digit code from your authenticator app.</p>
+
+    <form method="post" action="{{ url_for('auth.login_totp') }}" autocomplete="off">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+        <div class="form-group" id="totp-code-group">
+            <label for="code">Authenticator code</label>
+            <input type="text" id="code" name="code"
+                   inputmode="numeric" pattern="[0-9]*" maxlength="6"
+                   autocomplete="one-time-code" autofocus
+                   placeholder="123456">
+        </div>
+
+        <div class="form-group hidden" id="recovery-code-group">
+            <label for="recovery_code">Recovery code</label>
+            <input type="text" id="recovery_code" name="recovery_code"
+                   autocomplete="off" placeholder="ABCDE-FGHJK">
+            <small>Each recovery code can only be used once.</small>
+        </div>
+
+        <button type="submit" class="btn btn-primary">Verify</button>
+        <button type="button" class="btn btn-secondary" id="toggle-recovery">
+            Use a recovery code instead
+        </button>
+    </form>
+
+    <p class="auth-footnote">
+        <a href="{{ url_for('auth.login') }}">Start over</a>
+    </p>
+    {% else %}
+    <h2>Sign in</h2>
+
+    <form method="post" action="{{ url_for('auth.login') }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="hidden" name="next" value="{{ next_url }}">
+
+        <div class="form-group">
+            <label for="username">Username</label>
+            <input type="text" id="username" name="username"
+                   autocomplete="username" autofocus required>
+        </div>
+
+        <div class="form-group">
+            <label for="password">Password</label>
+            <input type="password" id="password" name="password"
+                   autocomplete="current-password" required>
+        </div>
+
+        <button type="submit" class="btn btn-primary">Sign in</button>
+    </form>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+{% if stage == 'totp' %}
+<script>
+    (function () {
+        const toggle = document.getElementById('toggle-recovery');
+        const codeGroup = document.getElementById('totp-code-group');
+        const recoveryGroup = document.getElementById('recovery-code-group');
+        if (!toggle || !codeGroup || !recoveryGroup) return;
+
+        toggle.addEventListener('click', function () {
+            const showingRecovery = !recoveryGroup.classList.contains('hidden');
+            recoveryGroup.classList.toggle('hidden', showingRecovery);
+            codeGroup.classList.toggle('hidden', !showingRecovery);
+            // Only submit the field the user can actually see.
+            document.getElementById('code').disabled = !showingRecovery;
+            document.getElementById('recovery_code').disabled = showingRecovery;
+            toggle.textContent = showingRecovery
+                ? 'Use a recovery code instead'
+                : 'Use an authenticator code instead';
+            const focusTarget = showingRecovery ? 'code' : 'recovery_code';
+            document.getElementById(focusTarget).focus();
+        });
+    })();
+</script>
+{% endif %}
+{% endblock %}

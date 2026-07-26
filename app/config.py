@@ -2,6 +2,8 @@
 Configuration management for Porkbun Certificate Sync
 """
 import os
+import tempfile
+import threading
 import yaml
 import logging
 from typing import Dict, List, Optional
@@ -9,26 +11,35 @@ from pathlib import Path
 
 logger = logging.getLogger(__name__)
 
+# The config file holds Porkbun API credentials, encrypted SSH passwords and the
+# admin password digest, so it must not be world- or group-readable.
+CONFIG_FILE_MODE = 0o600
+
 
 class Config:
     """Manages application configuration stored in YAML"""
-    
+
     def __init__(self, config_path: str = None):
         """
         Initialize configuration manager
-        
+
         Args:
             config_path: Path to config file (defaults to /app/config/config.yaml)
         """
         if config_path is None:
             config_path = os.environ.get('CONFIG_PATH', '/app/config/config.yaml')
-        
+
         self.config_path = config_path
         self.config_dir = os.path.dirname(config_path)
-        
+
         # Ensure config directory exists
         os.makedirs(self.config_dir, exist_ok=True)
-        
+
+        # Serialises save() across the request threads and the scheduler thread.
+        # Without it, two concurrent whole-file rewrites can truncate the file --
+        # which now means losing the only admin credentials, not just a setting.
+        self._save_lock = threading.Lock()
+
         self.config = self._load_config()
     
     def _load_config(self) -> Dict:
@@ -62,18 +73,52 @@ class Config:
             "schedule": {
                 "enabled": False,
                 "cron": "0 2 * * *"
+            },
+            "auth": {
+                "version": 1,
+                "users": []
             }
         }
-    
+
     def save(self):
-        """Save configuration to YAML file"""
-        try:
-            with open(self.config_path, 'w') as f:
-                yaml.safe_dump(self.config, f, default_flow_style=False, sort_keys=False)
-            logger.info(f"Saved configuration to {self.config_path}")
-        except Exception as e:
-            logger.error(f"Failed to save config: {e}")
-            raise
+        """
+        Save configuration to YAML file.
+
+        Writes to a temporary file in the same directory and then os.replace()s it
+        into place, so an interrupted or concurrent write can never leave a
+        truncated config behind. The file is created with mode 0600 because it
+        holds API credentials, encrypted SSH passwords and the admin password
+        digest.
+        """
+        with self._save_lock:
+            tmp_path = None
+            try:
+                fd, tmp_path = tempfile.mkstemp(
+                    prefix='.config-', suffix='.yaml.tmp', dir=self.config_dir
+                )
+                try:
+                    with os.fdopen(fd, 'w') as f:
+                        yaml.safe_dump(
+                            self.config, f, default_flow_style=False, sort_keys=False
+                        )
+                        f.flush()
+                        os.fsync(f.fileno())
+                except Exception:
+                    # fdopen took ownership of fd; it is closed by the with-block
+                    raise
+                os.chmod(tmp_path, CONFIG_FILE_MODE)
+                os.replace(tmp_path, self.config_path)
+                tmp_path = None
+                logger.info(f"Saved configuration to {self.config_path}")
+            except Exception as e:
+                logger.error(f"Failed to save config: {e}")
+                raise
+            finally:
+                if tmp_path and os.path.exists(tmp_path):
+                    try:
+                        os.unlink(tmp_path)
+                    except OSError:
+                        pass
     
     def get_api_credentials(self) -> tuple:
         """Get API credentials"""
@@ -186,7 +231,91 @@ class Config:
         """Update schedule configuration"""
         if "schedule" not in self.config:
             self.config["schedule"] = {}
-        
+
         self.config["schedule"]["enabled"] = enabled
         self.config["schedule"]["cron"] = cron
+        self.save()
+
+    # ------------------------------------------------------------------
+    # Authentication
+    #
+    # The `auth` section is managed by the application (see app/auth.py) and is
+    # not meant to be hand-edited. Users are stored as a list even though only a
+    # single admin is supported today, so multi-user support can be added later
+    # without migrating existing config files.
+    #
+    # Break-glass: stop the container, delete the whole `auth:` block from
+    # config.yaml and restart. The next request goes to /setup and every other
+    # setting is preserved.
+    # ------------------------------------------------------------------
+
+    def get_auth_config(self) -> Dict:
+        """Get the auth section (empty but well-formed if absent)"""
+        auth = self.config.get("auth")
+        if not isinstance(auth, dict):
+            return {"version": 1, "users": []}
+        return auth
+
+    def get_auth_users(self) -> List[Dict]:
+        """Get the list of configured users"""
+        users = self.get_auth_config().get("users")
+        if not isinstance(users, list):
+            return []
+        return [u for u in users if isinstance(u, dict)]
+
+    def get_auth_user(self, username: str) -> Optional[Dict]:
+        """Look up a user by username (case-insensitive)"""
+        target = (username or "").strip().lower()
+        if not target:
+            return None
+        for user in self.get_auth_users():
+            if str(user.get("username", "")).lower() == target:
+                return user
+        return None
+
+    def get_auth_user_by_id(self, user_id: str) -> Optional[Dict]:
+        """Look up a user by its stable id"""
+        if not user_id:
+            return None
+        for user in self.get_auth_users():
+            if user.get("id") == user_id:
+                return user
+        return None
+
+    def add_auth_user(self, user: Dict):
+        """
+        Append a user record to the auth section.
+
+        Args:
+            user: Fully-formed user dict (see app/auth.py build_user_record)
+
+        Raises:
+            ValueError: if the username already exists
+        """
+        if self.get_auth_user(user.get("username", "")):
+            raise ValueError("A user with that name already exists")
+
+        auth = self.config.get("auth")
+        if not isinstance(auth, dict):
+            auth = {"version": 1, "users": []}
+            self.config["auth"] = auth
+        if not isinstance(auth.get("users"), list):
+            auth["users"] = []
+        auth.setdefault("version", 1)
+
+        auth["users"].append(user)
+        self.save()
+
+    def update_auth_user(self, user_id: str, changes: Dict):
+        """
+        Shallow-merge `changes` into the stored user record and persist.
+
+        Raises:
+            ValueError: if the user does not exist
+        """
+        user = self.get_auth_user_by_id(user_id)
+        if user is None:
+            raise ValueError("User not found")
+
+        user.update(changes)
         self.save()
