@@ -5,3 +5,4 @@ cryptography==46.0.7
 apscheduler==3.10.4
 gunicorn==22.0.0
 paramiko==5.0.0
+segno==1.6.6

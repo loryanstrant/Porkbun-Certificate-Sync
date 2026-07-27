@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% block title %}Create your account · Porkbun Certificate Sync{% endblock %}
+{% block subtitle %}First-run setup{% endblock %}
+
+{% block content %}
+<div class="section auth-card">
+    <h2>Create your administrator account</h2>
+    <p class="auth-hint">
+        This is the only account for this installation. It protects your Porkbun
+        API credentials, your SSH host passwords and your certificates, so choose
+        a strong password and store it somewhere safe.
+    </p>
+
+    {% if error %}
+    <p class="auth-error" role="alert"><span aria-hidden="true">⚠</span> {{ error }}</p>
+    {% endif %}
+
+    <form method="post" action="{{ url_for('auth.setup') }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+        <div class="form-group">
+            <label for="username">Username</label>
+            <input type="text" id="username" name="username" value="{{ username }}"
+                   autocomplete="username" autofocus required>
+            <small>3–64 characters: letters, numbers, dots, dashes, underscores and @</small>
+        </div>
+
+        <div class="form-group">
+            <label for="password">Password</label>
+            <input type="password" id="password" name="password"
+                   autocomplete="new-password" required>
+            <small>At least {{ min_length }} characters.</small>
+        </div>
+
+        <div class="form-group">
+            <label for="password_confirm">Confirm password</label>
+            <input type="password" id="password_confirm" name="password_confirm"
+                   autocomplete="new-password" required>
+        </div>
+
+        <button type="submit" class="btn btn-primary">Create account and sign in</button>
+    </form>
+
+    <div class="auth-notes">
+        <p>
+            <span aria-hidden="true">🔑</span>
+            You can turn on two-factor authentication from the Security tab once
+            you are signed in.
+        </p>
+        <p>
+            <span aria-hidden="true">⚠</span>
+            There is no password reset by email. If you lose this password, use a
+            recovery code, or stop the container, delete the <code>auth:</code>
+            block from <code>config.yaml</code> and restart to return to this page.
+        </p>
+        <p>
+            <span aria-hidden="true">🤖</span>
+            For unattended deployments, set <code>ADMIN_USERNAME</code> and
+            <code>ADMIN_PASSWORD</code> (or <code>ADMIN_PASSWORD_HASH</code>)
+            before the first start to skip this page.
+        </p>
+    </div>
+</div>
+{% endblock %}
