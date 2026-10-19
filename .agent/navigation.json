@@ -1,0 +1,1713 @@
+{
+  "schema_version": "1.0",
+  "repository": "Porkbun-Certificate-Sync",
+  "identity": {
+    "description": "A Docker container with a web-based management interface for retrieving SSL certificates from Porkbun and hosting them in a mounted volume.",
+    "default_branch": "main",
+    "languages": {
+      "Python": 20,
+      "JavaScript": 3,
+      "Shell": 1
+    },
+    "topics": [],
+    "licence": "MIT License",
+    "file_count": 40
+  },
+  "start_here": {
+    "readme": "README.md",
+    "agents_md": null,
+    "entry_points": [
+      "app/main.py"
+    ],
+    "decision_records": [],
+    "build_config": [
+      "requirements-dev.txt",
+      "requirements.txt"
+    ],
+    "source_roots": [
+      "app",
+      "contrib"
+    ]
+  },
+  "documentation": [
+    {
+      "path": ".github/copilot-instructions.md",
+      "title": "Copilot instructions — Porkbun-Certificate-Sync",
+      "lines": 52,
+      "headings": [
+        {
+          "level": 2,
+          "text": "What this repo is",
+          "anchor": "what-this-repo-is"
+        },
+        {
+          "level": 2,
+          "text": "Repo shape",
+          "anchor": "repo-shape"
+        },
+        {
+          "level": 2,
+          "text": "Conventions",
+          "anchor": "conventions"
+        },
+        {
+          "level": 2,
+          "text": "Never",
+          "anchor": "never"
+        }
+      ]
+    },
+    {
+      "path": "README.md",
+      "title": "🔐 Porkbun Certificate Sync",
+      "lines": 536,
+      "headings": [
+        {
+          "level": 2,
+          "text": "Features",
+          "anchor": "features"
+        },
+        {
+          "level": 2,
+          "text": "Screenshots",
+          "anchor": "screenshots"
+        },
+        {
+          "level": 3,
+          "text": "Light Mode",
+          "anchor": "light-mode"
+        },
+        {
+          "level": 3,
+          "text": "Dark Mode",
+          "anchor": "dark-mode"
+        },
+        {
+          "level": 2,
+          "text": "Quick Start",
+          "anchor": "quick-start"
+        },
+        {
+          "level": 3,
+          "text": "Using Docker Compose",
+          "anchor": "using-docker-compose"
+        },
+        {
+          "level": 3,
+          "text": "Using Docker CLI",
+          "anchor": "using-docker-cli"
+        },
+        {
+          "level": 2,
+          "text": "Configuration",
+          "anchor": "configuration"
+        },
+        {
+          "level": 3,
+          "text": "Web Interface",
+          "anchor": "web-interface"
+        },
+        {
+          "level": 3,
+          "text": "YAML Configuration",
+          "anchor": "yaml-configuration"
+        },
+        {
+          "level": 2,
+          "text": "Certificate Formats",
+          "anchor": "certificate-formats"
+        },
+        {
+          "level": 3,
+          "text": "File Naming Options",
+          "anchor": "file-naming-options"
+        },
+        {
+          "level": 2,
+          "text": "API Endpoints",
+          "anchor": "api-endpoints"
+        },
+        {
+          "level": 3,
+          "text": "Authentication",
+          "anchor": "authentication"
+        },
+        {
+          "level": 3,
+          "text": "Application",
+          "anchor": "application"
+        },
+        {
+          "level": 2,
+          "text": "Building from Source",
+          "anchor": "building-from-source"
+        },
+        {
+          "level": 2,
+          "text": "Development",
+          "anchor": "development"
+        },
+        {
+          "level": 3,
+          "text": "Requirements",
+          "anchor": "requirements"
+        },
+        {
+          "level": 3,
+          "text": "Local Development",
+          "anchor": "local-development"
+        },
+        {
+          "level": 3,
+          "text": "Running the tests",
+          "anchor": "running-the-tests"
+        },
+        {
+          "level": 2,
+          "text": "Environment Variables",
+          "anchor": "environment-variables"
+        },
+        {
+          "level": 3,
+          "text": "General",
+          "anchor": "general"
+        },
+        {
+          "level": 3,
+          "text": "Authentication",
+          "anchor": "authentication-1"
+        },
+        {
+          "level": 2,
+          "text": "Volumes",
+          "anchor": "volumes"
+        },
+        {
+          "level": 2,
+          "text": "Ports",
+          "anchor": "ports"
+        },
+        {
+          "level": 2,
+          "text": "Security Notes",
+          "anchor": "security-notes"
+        },
+        {
+          "level": 3,
+          "text": "Authentication Security",
+          "anchor": "authentication-security"
+        },
+        {
+          "level": 3,
+          "text": "SSH Distribution Security",
+          "anchor": "ssh-distribution-security"
+        },
+        {
+          "level": 2,
+          "text": "Upgrading from a version without authentication",
+          "anchor": "upgrading-from-a-version-without-authentication"
+        },
+        {
+          "level": 2,
+          "text": "Troubleshooting",
+          "anchor": "troubleshooting"
+        },
+        {
+          "level": 3,
+          "text": "Sign-in Issues",
+          "anchor": "sign-in-issues"
+        },
+        {
+          "level": 3,
+          "text": "API Connection Issues",
+          "anchor": "api-connection-issues"
+        },
+        {
+          "level": 3,
+          "text": "Certificate Sync Failures",
+          "anchor": "certificate-sync-failures"
+        },
+        {
+          "level": 3,
+          "text": "Permission Issues",
+          "anchor": "permission-issues"
+        },
+        {
+          "level": 2,
+          "text": "Contributing",
+          "anchor": "contributing"
+        },
+        {
+          "level": 2,
+          "text": "Development Approach",
+          "anchor": "development-approach"
+        },
+        {
+          "level": 2,
+          "text": "License",
+          "anchor": "license"
+        },
+        {
+          "level": 2,
+          "text": "Acknowledgments",
+          "anchor": "acknowledgments"
+        }
+      ]
+    },
+    {
+      "path": "contrib/README.md",
+      "title": "contrib/synology-dsm-install.sh",
+      "lines": 129,
+      "headings": [
+        {
+          "level": 2,
+          "text": "Requirements",
+          "anchor": "requirements"
+        },
+        {
+          "level": 2,
+          "text": "Configuration",
+          "anchor": "configuration"
+        },
+        {
+          "level": 2,
+          "text": "Usage",
+          "anchor": "usage"
+        },
+        {
+          "level": 3,
+          "text": "Timeouts",
+          "anchor": "timeouts"
+        },
+        {
+          "level": 2,
+          "text": "Two gotchas this script exists to handle",
+          "anchor": "two-gotchas-this-script-exists-to-handle"
+        },
+        {
+          "level": 2,
+          "text": "DSM API notes (learned the hard way against DSM 7.3.2)",
+          "anchor": "dsm-api-notes-learned-the-hard-way-against-dsm-732"
+        },
+        {
+          "level": 2,
+          "text": "Safety checks before any import",
+          "anchor": "safety-checks-before-any-import"
+        }
+      ]
+    }
+  ],
+  "code": {
+    "source_roots": [
+      "app",
+      "contrib"
+    ],
+    "symbol_source": "repomix (tree-sitter signatures)",
+    "routes": [],
+    "files": [
+      {
+        "path": "app/auth.py",
+        "symbols": [
+          {
+            "kind": "const",
+            "name": "SAFE_METHODS",
+            "parent": "",
+            "signature": "SAFE_METHODS = frozenset({'GET', 'HEAD', 'OPTIONS', 'TRACE'})"
+          },
+          {
+            "kind": "const",
+            "name": "PUBLIC_ENDPOINTS",
+            "parent": "",
+            "signature": "PUBLIC_ENDPOINTS = frozenset("
+          },
+          {
+            "kind": "const",
+            "name": "SECRET_KEY_FILENAME",
+            "parent": "",
+            "signature": "SECRET_KEY_FILENAME = '.secret_key'"
+          },
+          {
+            "kind": "const",
+            "name": "SESSION_COOKIE_NAME",
+            "parent": "",
+            "signature": "SESSION_COOKIE_NAME = 'pbcs_session'"
+          },
+          {
+            "kind": "const",
+            "name": "PASSWORD_HASH_METHOD",
+            "parent": "",
+            "signature": "PASSWORD_HASH_METHOD = 'scrypt:32768:8:1'   # pinned so a werkzeug bump can't change it silently"
+          },
+          {
+            "kind": "const",
+            "name": "PASSWORD_MIN_LENGTH",
+            "parent": "",
+            "signature": "PASSWORD_MIN_LENGTH = 12"
+          },
+          {
+            "kind": "const",
+            "name": "PASSWORD_MAX_LENGTH",
+            "parent": "",
+            "signature": "PASSWORD_MAX_LENGTH = 1024                  # cheap DoS guard on the KDF input"
+          },
+          {
+            "kind": "const",
+            "name": "USERNAME_PATTERN",
+            "parent": "",
+            "signature": "USERNAME_PATTERN = re.compile(r'^[A-Za-z0-9._@-]{3,64}$')"
+          },
+          {
+            "kind": "const",
+            "name": "ABSOLUTE_SESSION_LIFETIME",
+            "parent": "",
+            "signature": "ABSOLUTE_SESSION_LIFETIME = timedelta(days=7)"
+          },
+          {
+            "kind": "const",
+            "name": "PENDING_TOTP_SECONDS",
+            "parent": "",
+            "signature": "PENDING_TOTP_SECONDS = 300"
+          },
+          {
+            "kind": "const",
+            "name": "PENDING_ENROLMENT_SECONDS",
+            "parent": "",
+            "signature": "PENDING_ENROLMENT_SECONDS = 600"
+          },
+          {
+            "kind": "const",
+            "name": "TOTP_DIGITS",
+            "parent": "",
+            "signature": "TOTP_DIGITS = 6"
+          },
+          {
+            "kind": "const",
+            "name": "TOTP_PERIOD",
+            "parent": "",
+            "signature": "TOTP_PERIOD = 30"
+          },
+          {
+            "kind": "const",
+            "name": "TOTP_WINDOW",
+            "parent": "",
+            "signature": "TOTP_WINDOW = 1                             # +/- one 30s step"
+          },
+          {
+            "kind": "const",
+            "name": "TOTP_ISSUER",
+            "parent": "",
+            "signature": "TOTP_ISSUER = 'Porkbun Certificate Sync'"
+          },
+          {
+            "kind": "const",
+            "name": "RECOVERY_CODE_COUNT",
+            "parent": "",
+            "signature": "RECOVERY_CODE_COUNT = 10"
+          },
+          {
+            "kind": "const",
+            "name": "RECOVERY_CODE_ALPHABET",
+            "parent": "",
+            "signature": "RECOVERY_CODE_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'   # no 0/O/1/I"
+          },
+          {
+            "kind": "const",
+            "name": "RECOVERY_CODE_GROUP",
+            "parent": "",
+            "signature": "RECOVERY_CODE_GROUP = 5"
+          },
+          {
+            "kind": "const",
+            "name": "FREE_ATTEMPTS",
+            "parent": "",
+            "signature": "FREE_ATTEMPTS = 3"
+          },
+          {
+            "kind": "const",
+            "name": "IP_FREE_ATTEMPTS",
+            "parent": "",
+            "signature": "IP_FREE_ATTEMPTS = 10                       # looser: a proxy can collapse every client into one bucket"
+          },
+          {
+            "kind": "const",
+            "name": "SENSITIVE_FREE_ATTEMPTS",
+            "parent": "",
+            "signature": "SENSITIVE_FREE_ATTEMPTS = 5"
+          },
+          {
+            "kind": "const",
+            "name": "BASE_LOCKOUT",
+            "parent": "",
+            "signature": "BASE_LOCKOUT = 5                            # seconds"
+          },
+          {
+            "kind": "const",
+            "name": "MAX_LOCKOUT",
+            "parent": "",
+            "signature": "MAX_LOCKOUT = 900                           # 15 minutes"
+          },
+          {
+            "kind": "const",
+            "name": "ATTEMPT_WINDOW",
+            "parent": "",
+            "signature": "ATTEMPT_WINDOW = 1800                       # a bucket idle this long is forgotten"
+          },
+          {
+            "kind": "const",
+            "name": "CSRF_SESSION_KEY",
+            "parent": "",
+            "signature": "CSRF_SESSION_KEY = 'csrf'"
+          },
+          {
+            "kind": "const",
+            "name": "CSRF_HEADER_NAMES",
+            "parent": "",
+            "signature": "CSRF_HEADER_NAMES = ('X-CSRF-Token', 'X-CSRFToken')"
+          },
+          {
+            "kind": "const",
+            "name": "CSRF_FORM_FIELD",
+            "parent": "",
+            "signature": "CSRF_FORM_FIELD = 'csrf_token'"
+          },
+          {
+            "kind": "class",
+            "name": "TOTPUnavailable",
+            "parent": "",
+            "signature": "class TOTPUnavailable(Exception)"
+          },
+          {
+            "kind": "function",
+            "name": "load_or_create_secret_key",
+            "parent": "",
+            "signature": "load_or_create_secret_key(config_dir: str) -> str"
+          },
+          {
+            "kind": "function",
+            "name": "hash_secret",
+            "parent": "",
+            "signature": "hash_secret(value: str) -> str"
+          },
+          {
+            "kind": "function",
+            "name": "verify_secret",
+            "parent": "",
+            "signature": "verify_secret(digest: str, value: str) -> bool"
+          },
+          {
+            "kind": "function",
+            "name": "dummy_digest",
+            "parent": "",
+            "signature": "dummy_digest() -> str"
+          },
+          {
+            "kind": "function",
+            "name": "log_safe",
+            "parent": "",
+            "signature": "log_safe(value, limit: int = 64) -> str"
+          },
+          {
+            "kind": "function",
+            "name": "validate_username",
+            "parent": "",
+            "signature": "validate_username(username: str) -> str"
+          },
+          {
+            "kind": "function",
+            "name": "validate_password_policy",
+            "parent": "",
+            "signature": "validate_password_policy(password: str) -> None"
+          },
+          {
+            "kind": "function",
+            "name": "safe_next",
+            "parent": "",
+            "signature": "safe_next(candidate, fallback: str = '/') -> str"
+          },
+          {
+            "kind": "function",
+            "name": "generate_totp_secret",
+            "parent": "",
+            "signature": "generate_totp_secret() -> str"
+          },
+          {
+            "kind": "function",
+            "name": "hotp",
+            "parent": "",
+            "signature": "hotp(key: bytes, counter: int, digits: int = TOTP_DIGITS) -> str"
+          },
+          {
+            "kind": "function",
+            "name": "build_otpauth_uri",
+            "parent": "",
+            "signature": "build_otpauth_uri(username: str, secret_b32: str) -> str"
+          },
+          {
+            "kind": "function",
+            "name": "build_qr_data_uri",
+            "parent": "",
+            "signature": "build_qr_data_uri(otpauth_uri: str) -> str"
+          },
+          {
+            "kind": "function",
+            "name": "generate_recovery_code",
+            "parent": "",
+            "signature": "generate_recovery_code() -> str"
+          },
+          {
+            "kind": "function",
+            "name": "normalise_recovery_code",
+            "parent": "",
+            "signature": "normalise_recovery_code(code: str) -> str"
+          },
+          {
+            "kind": "function",
+            "name": "request_is_https",
+            "parent": "",
+            "signature": "request_is_https() -> bool"
+          },
+          {
+            "kind": "class",
+            "name": "SchemeAwareSessionInterface",
+            "parent": "",
+            "signature": "class SchemeAwareSessionInterface(SecureCookieSessionInterface)"
+          },
+          {
+            "kind": "function",
+            "name": "get_cookie_secure",
+            "parent": "SchemeAwareSessionInterface",
+            "signature": "get_cookie_secure(self, app)"
+          },
+          {
+            "kind": "class",
+            "name": "AuthManager",
+            "parent": "",
+            "signature": "class AuthManager"
+          },
+          {
+            "kind": "function",
+            "name": "is_configured",
+            "parent": "AuthManager",
+            "signature": "is_configured(self) -> bool"
+          },
+          {
+            "kind": "function",
+            "name": "find_user",
+            "parent": "AuthManager",
+            "signature": "find_user(self, username)"
+          },
+          {
+            "kind": "function",
+            "name": "create_user",
+            "parent": "AuthManager",
+            "signature": "create_user(self, username: str, password: str) -> dict"
+          },
+          {
+            "kind": "function",
+            "name": "maybe_seed_from_environment",
+            "parent": "AuthManager",
+            "signature": "maybe_seed_from_environment(self)"
+          },
+          {
+            "kind": "function",
+            "name": "verify_user_password",
+            "parent": "AuthManager",
+            "signature": "verify_user_password(self, user, password: str) -> bool"
+          },
+          {
+            "kind": "function",
+            "name": "bump_credential_version",
+            "parent": "AuthManager",
+            "signature": "bump_credential_version(self, user_id: str) -> int"
+          },
+          {
+            "kind": "function",
+            "name": "change_password",
+            "parent": "AuthManager",
+            "signature": "change_password(self, user_id: str, new_password: str) -> int"
+          },
+          {
+            "kind": "function",
+            "name": "start_session",
+            "parent": "AuthManager",
+            "signature": "start_session(self, user)"
+          },
+          {
+            "kind": "function",
+            "name": "refresh_session_credentials",
+            "parent": "AuthManager",
+            "signature": "refresh_session_credentials(self, user_id: str, credential_version: int)"
+          },
+          {
+            "kind": "function",
+            "name": "current_user",
+            "parent": "AuthManager",
+            "signature": "current_user(self)"
+          },
+          {
+            "kind": "function",
+            "name": "logout",
+            "parent": "AuthManager",
+            "signature": "logout(self)"
+          },
+          {
+            "kind": "function",
+            "name": "start_pending_totp",
+            "parent": "AuthManager",
+            "signature": "start_pending_totp(self, user, next_url: str)"
+          },
+          {
+            "kind": "function",
+            "name": "get_pending_user",
+            "parent": "AuthManager",
+            "signature": "get_pending_user(self)"
+          },
+          {
+            "kind": "function",
+            "name": "clear_pending_totp",
+            "parent": "AuthManager",
+            "signature": "clear_pending_totp(self)"
+          },
+          {
+            "kind": "function",
+            "name": "totp_enabled",
+            "parent": "AuthManager",
+            "signature": "totp_enabled(user) -> bool"
+          },
+          {
+            "kind": "function",
+            "name": "get_totp_secret",
+            "parent": "AuthManager",
+            "signature": "get_totp_secret(user) -> str"
+          },
+          {
+            "kind": "function",
+            "name": "verify_totp_for_user",
+            "parent": "AuthManager",
+            "signature": "verify_totp_for_user(self, user, code) -> bool"
+          },
+          {
+            "kind": "function",
+            "name": "start_enrolment",
+            "parent": "AuthManager",
+            "signature": "start_enrolment(self, user_id: str, secret_b32: str)"
+          },
+          {
+            "kind": "function",
+            "name": "get_enrolment_secret",
+            "parent": "AuthManager",
+            "signature": "get_enrolment_secret(self, user_id: str)"
+          },
+          {
+            "kind": "function",
+            "name": "clear_enrolment",
+            "parent": "AuthManager",
+            "signature": "clear_enrolment(self, user_id: str)"
+          },
+          {
+            "kind": "function",
+            "name": "enable_totp",
+            "parent": "AuthManager",
+            "signature": "enable_totp(self, user_id: str, secret_b32: str)"
+          },
+          {
+            "kind": "function",
+            "name": "disable_totp",
+            "parent": "AuthManager",
+            "signature": "disable_totp(self, user_id: str) -> int"
+          },
+          {
+            "kind": "function",
+            "name": "regenerate_recovery_codes",
+            "parent": "AuthManager",
+            "signature": "regenerate_recovery_codes(self, user_id: str)"
+          },
+          {
+            "kind": "function",
+            "name": "consume_recovery_code",
+            "parent": "AuthManager",
+            "signature": "consume_recovery_code(self, user, code: str) -> bool"
+          },
+          {
+            "kind": "function",
+            "name": "recovery_codes_remaining",
+            "parent": "AuthManager",
+            "signature": "recovery_codes_remaining(user) -> int"
+          },
+          {
+            "kind": "function",
+            "name": "login_buckets",
+            "parent": "AuthManager",
+            "signature": "login_buckets(self, username: str)"
+          },
+          {
+            "kind": "function",
+            "name": "check_locked",
+            "parent": "AuthManager",
+            "signature": "check_locked(self, buckets) -> int"
+          },
+          {
+            "kind": "function",
+            "name": "register_failure",
+            "parent": "AuthManager",
+            "signature": "register_failure(self, buckets) -> int"
+          },
+          {
+            "kind": "function",
+            "name": "reset_attempts",
+            "parent": "AuthManager",
+            "signature": "reset_attempts(self, buckets=None)"
+          },
+          {
+            "kind": "function",
+            "name": "get_csrf_token",
+            "parent": "AuthManager",
+            "signature": "get_csrf_token(self) -> str"
+          },
+          {
+            "kind": "function",
+            "name": "validate_csrf",
+            "parent": "AuthManager",
+            "signature": "validate_csrf(self, req)"
+          },
+          {
+            "kind": "function",
+            "name": "get_auth",
+            "parent": "",
+            "signature": "get_auth() -> AuthManager"
+          },
+          {
+            "kind": "function",
+            "name": "client_ip",
+            "parent": "",
+            "signature": "client_ip() -> str"
+          },
+          {
+            "kind": "route",
+            "name": "setup",
+            "parent": "",
+            "signature": "@auth_bp.route('/setup', methods=['GET', 'POST']) -> setup()"
+          },
+          {
+            "kind": "route",
+            "name": "login",
+            "parent": "",
+            "signature": "@auth_bp.route('/login', methods=['GET', 'POST']) -> login()"
+          },
+          {
+            "kind": "route",
+            "name": "login_totp",
+            "parent": "",
+            "signature": "@auth_bp.route('/login/totp', methods=['GET', 'POST']) -> login_totp()"
+          },
+          {
+            "kind": "route",
+            "name": "logout",
+            "parent": "",
+            "signature": "@auth_bp.route('/logout', methods=['POST']) -> logout()"
+          },
+          {
+            "kind": "route",
+            "name": "csrf_token_endpoint",
+            "parent": "",
+            "signature": "@auth_bp.route('/api/csrf-token', methods=['GET']) -> csrf_token_endpoint()"
+          },
+          {
+            "kind": "route",
+            "name": "auth_status",
+            "parent": "",
+            "signature": "@auth_bp.route('/api/auth/status', methods=['GET']) -> auth_status()"
+          },
+          {
+            "kind": "route",
+            "name": "change_password",
+            "parent": "",
+            "signature": "@auth_bp.route('/api/auth/password', methods=['POST']) -> change_password()"
+          },
+          {
+            "kind": "route",
+            "name": "totp_begin",
+            "parent": "",
+            "signature": "@auth_bp.route('/api/auth/totp/begin', methods=['POST']) -> totp_begin()"
+          },
+          {
+            "kind": "route",
+            "name": "totp_confirm",
+            "parent": "",
+            "signature": "@auth_bp.route('/api/auth/totp/confirm', methods=['POST']) -> totp_confirm()"
+          },
+          {
+            "kind": "route",
+            "name": "totp_disable",
+            "parent": "",
+            "signature": "@auth_bp.route('/api/auth/totp/disable', methods=['POST']) -> totp_disable()"
+          },
+          {
+            "kind": "route",
+            "name": "regenerate_recovery_codes",
+            "parent": "",
+            "signature": "@auth_bp.route('/api/auth/recovery-codes', methods=['POST']) -> regenerate_recovery_codes()"
+          },
+          {
+            "kind": "function",
+            "name": "init_auth",
+            "parent": "",
+            "signature": "init_auth(app, config)"
+          }
+        ]
+      },
+      {
+        "path": "app/certificate_manager.py",
+        "symbols": [
+          {
+            "kind": "class",
+            "name": "CertificateManager",
+            "parent": "",
+            "signature": "class CertificateManager"
+          },
+          {
+            "kind": "function",
+            "name": "list_certificates",
+            "parent": "CertificateManager",
+            "signature": "list_certificates(self) -> List[str]"
+          }
+        ]
+      },
+      {
+        "path": "app/config.py",
+        "symbols": [
+          {
+            "kind": "const",
+            "name": "CONFIG_FILE_MODE",
+            "parent": "",
+            "signature": "CONFIG_FILE_MODE = 0o600"
+          },
+          {
+            "kind": "class",
+            "name": "Config",
+            "parent": "",
+            "signature": "class Config"
+          },
+          {
+            "kind": "function",
+            "name": "save",
+            "parent": "Config",
+            "signature": "save(self)"
+          },
+          {
+            "kind": "function",
+            "name": "get_api_credentials",
+            "parent": "Config",
+            "signature": "get_api_credentials(self) -> tuple"
+          },
+          {
+            "kind": "function",
+            "name": "set_api_credentials",
+            "parent": "Config",
+            "signature": "set_api_credentials(self, api_key: str, secret_key: str)"
+          },
+          {
+            "kind": "function",
+            "name": "get_domains",
+            "parent": "Config",
+            "signature": "get_domains(self) -> List[Dict]"
+          },
+          {
+            "kind": "function",
+            "name": "remove_domain",
+            "parent": "Config",
+            "signature": "remove_domain(self, domain: str)"
+          },
+          {
+            "kind": "function",
+            "name": "get_certificate_config",
+            "parent": "Config",
+            "signature": "get_certificate_config(self) -> Dict"
+          },
+          {
+            "kind": "function",
+            "name": "get_schedule_config",
+            "parent": "Config",
+            "signature": "get_schedule_config(self) -> Dict"
+          },
+          {
+            "kind": "function",
+            "name": "update_schedule_config",
+            "parent": "Config",
+            "signature": "update_schedule_config(self, enabled: bool, cron: str)"
+          },
+          {
+            "kind": "function",
+            "name": "get_auth_config",
+            "parent": "Config",
+            "signature": "get_auth_config(self) -> Dict"
+          },
+          {
+            "kind": "function",
+            "name": "get_auth_users",
+            "parent": "Config",
+            "signature": "get_auth_users(self) -> List[Dict]"
+          },
+          {
+            "kind": "function",
+            "name": "get_auth_user",
+            "parent": "Config",
+            "signature": "get_auth_user(self, username: str) -> Optional[Dict]"
+          },
+          {
+            "kind": "function",
+            "name": "get_auth_user_by_id",
+            "parent": "Config",
+            "signature": "get_auth_user_by_id(self, user_id: str) -> Optional[Dict]"
+          },
+          {
+            "kind": "function",
+            "name": "add_auth_user",
+            "parent": "Config",
+            "signature": "add_auth_user(self, user: Dict)"
+          },
+          {
+            "kind": "function",
+            "name": "update_auth_user",
+            "parent": "Config",
+            "signature": "update_auth_user(self, user_id: str, changes: Dict)"
+          }
+        ]
+      },
+      {
+        "path": "app/distribution_log.py",
+        "symbols": [
+          {
+            "kind": "class",
+            "name": "DistributionLog",
+            "parent": "",
+            "signature": "class DistributionLog"
+          },
+          {
+            "kind": "function",
+            "name": "add_sync_event",
+            "parent": "DistributionLog",
+            "signature": "add_sync_event(self, domains: List[str], status: str, results: List[Dict] = None)"
+          },
+          {
+            "kind": "function",
+            "name": "add_bulk_distribution_event",
+            "parent": "DistributionLog",
+            "signature": "add_bulk_distribution_event(self, results: List[Dict])"
+          },
+          {
+            "kind": "function",
+            "name": "get_logs",
+            "parent": "DistributionLog",
+            "signature": "get_logs(self, limit: int = 100, event_type: str = None) -> List[Dict]"
+          },
+          {
+            "kind": "function",
+            "name": "clear_logs",
+            "parent": "DistributionLog",
+            "signature": "clear_logs(self)"
+          },
+          {
+            "kind": "function",
+            "name": "get_stats",
+            "parent": "DistributionLog",
+            "signature": "get_stats(self) -> Dict"
+          }
+        ]
+      },
+      {
+        "path": "app/main.py",
+        "symbols": [
+          {
+            "kind": "function",
+            "name": "sanitize_error_message",
+            "parent": "",
+            "signature": "sanitize_error_message(error: Exception) -> str"
+          },
+          {
+            "kind": "const",
+            "name": "MAX_ERROR_LENGTH",
+            "parent": "",
+            "signature": "MAX_ERROR_LENGTH = 200"
+          },
+          {
+            "kind": "route",
+            "name": "index",
+            "parent": "",
+            "signature": "@app.route('/') -> index()"
+          },
+          {
+            "kind": "route",
+            "name": "get_settings",
+            "parent": "",
+            "signature": "@app.route('/api/settings', methods=['GET']) -> get_settings()"
+          },
+          {
+            "kind": "route",
+            "name": "update_api_settings",
+            "parent": "",
+            "signature": "@app.route('/api/settings/api', methods=['POST']) -> update_api_settings()"
+          },
+          {
+            "kind": "route",
+            "name": "update_certificate_settings",
+            "parent": "",
+            "signature": "@app.route('/api/settings/certificates', methods=['POST']) -> update_certificate_settings()"
+          },
+          {
+            "kind": "route",
+            "name": "update_schedule_settings",
+            "parent": "",
+            "signature": "@app.route('/api/settings/schedule', methods=['POST']) -> update_schedule_settings()"
+          },
+          {
+            "kind": "route",
+            "name": "get_domains",
+            "parent": "",
+            "signature": "@app.route('/api/domains', methods=['GET']) -> get_domains()"
+          },
+          {
+            "kind": "route",
+            "name": "add_domain",
+            "parent": "",
+            "signature": "@app.route('/api/domains', methods=['POST']) -> add_domain()"
+          },
+          {
+            "kind": "route",
+            "name": "update_domain",
+            "parent": "",
+            "signature": "@app.route('/api/domains/<domain>', methods=['PUT']) -> update_domain(domain)"
+          },
+          {
+            "kind": "route",
+            "name": "remove_domain",
+            "parent": "",
+            "signature": "@app.route('/api/domains/<domain>', methods=['DELETE']) -> remove_domain(domain)"
+          },
+          {
+            "kind": "route",
+            "name": "trigger_sync",
+            "parent": "",
+            "signature": "@app.route('/api/sync', methods=['POST']) -> trigger_sync()"
+          },
+          {
+            "kind": "route",
+            "name": "get_sync_status",
+            "parent": "",
+            "signature": "@app.route('/api/sync/status', methods=['GET']) -> get_sync_status()"
+          },
+          {
+            "kind": "route",
+            "name": "health",
+            "parent": "",
+            "signature": "@app.route('/health') -> health()"
+          },
+          {
+            "kind": "route",
+            "name": "get_ssh_hosts",
+            "parent": "",
+            "signature": "@app.route('/api/ssh-hosts', methods=['GET']) -> get_ssh_hosts()"
+          },
+          {
+            "kind": "route",
+            "name": "add_ssh_host",
+            "parent": "",
+            "signature": "@app.route('/api/ssh-hosts', methods=['POST']) -> add_ssh_host()"
+          },
+          {
+            "kind": "route",
+            "name": "update_ssh_host",
+            "parent": "",
+            "signature": "@app.route('/api/ssh-hosts/<display_name>', methods=['PUT']) -> update_ssh_host(display_name)"
+          },
+          {
+            "kind": "route",
+            "name": "remove_ssh_host",
+            "parent": "",
+            "signature": "@app.route('/api/ssh-hosts/<display_name>', methods=['DELETE']) -> remove_ssh_host(display_name)"
+          },
+          {
+            "kind": "route",
+            "name": "get_distribution_logs",
+            "parent": "",
+            "signature": "@app.route('/api/distribution/logs', methods=['GET']) -> get_distribution_logs()"
+          },
+          {
+            "kind": "route",
+            "name": "test_ssh_connection",
+            "parent": "",
+            "signature": "@app.route('/api/distribution/test', methods=['POST']) -> test_ssh_connection()"
+          }
+        ]
+      },
+      {
+        "path": "app/password_encryption.py",
+        "symbols": [
+          {
+            "kind": "class",
+            "name": "PasswordEncryption",
+            "parent": "",
+            "signature": "class PasswordEncryption"
+          },
+          {
+            "kind": "function",
+            "name": "encrypt_password",
+            "parent": "PasswordEncryption",
+            "signature": "encrypt_password(self, password: str) -> str"
+          },
+          {
+            "kind": "function",
+            "name": "decrypt_password",
+            "parent": "PasswordEncryption",
+            "signature": "decrypt_password(self, encrypted_password: str) -> str"
+          },
+          {
+            "kind": "function",
+            "name": "get_password_encryption",
+            "parent": "",
+            "signature": "get_password_encryption() -> PasswordEncryption"
+          }
+        ]
+      },
+      {
+        "path": "app/porkbun_api.py",
+        "symbols": [
+          {
+            "kind": "class",
+            "name": "PorkbunAPI",
+            "parent": "",
+            "signature": "class PorkbunAPI"
+          },
+          {
+            "kind": "function",
+            "name": "ping",
+            "parent": "PorkbunAPI",
+            "signature": "ping(self) -> bool"
+          },
+          {
+            "kind": "function",
+            "name": "retrieve_ssl_bundle",
+            "parent": "PorkbunAPI",
+            "signature": "retrieve_ssl_bundle(self, domain: str) -> Tuple[str, str, str]"
+          }
+        ]
+      },
+      {
+        "path": "app/ssh_config.py",
+        "symbols": [
+          {
+            "kind": "class",
+            "name": "SSHConfig",
+            "parent": "",
+            "signature": "class SSHConfig"
+          },
+          {
+            "kind": "function",
+            "name": "get_ssh_hosts",
+            "parent": "SSHConfig",
+            "signature": "get_ssh_hosts(self) -> List[Dict]"
+          },
+          {
+            "kind": "function",
+            "name": "remove_ssh_host",
+            "parent": "SSHConfig",
+            "signature": "remove_ssh_host(self, display_name: str)"
+          },
+          {
+            "kind": "function",
+            "name": "get_ssh_host",
+            "parent": "SSHConfig",
+            "signature": "get_ssh_host(self, display_name: str) -> Optional[Dict]"
+          },
+          {
+            "kind": "function",
+            "name": "verify_password",
+            "parent": "SSHConfig",
+            "signature": "verify_password(self, display_name: str, password: str) -> bool"
+          },
+          {
+            "kind": "function",
+            "name": "get_decrypted_password",
+            "parent": "SSHConfig",
+            "signature": "get_decrypted_password(self, display_name: str) -> Optional[str]"
+          }
+        ]
+      },
+      {
+        "path": "app/ssh_distribution.py",
+        "symbols": [
+          {
+            "kind": "class",
+            "name": "SSHDistributor",
+            "parent": "",
+            "signature": "class SSHDistributor"
+          },
+          {
+            "kind": "function",
+            "name": "distribute_to_host",
+            "parent": "SSHDistributor",
+            "signature": "distribute_to_host(self, host_config: Dict, certificate_files: List[str]) -> Dict"
+          },
+          {
+            "kind": "function",
+            "name": "distribute_to_all_hosts",
+            "parent": "SSHDistributor",
+            "signature": "distribute_to_all_hosts(self, certificate_files: List[str]) -> List[Dict]"
+          }
+        ]
+      },
+      {
+        "path": "app/static/js/app.js",
+        "symbols": [
+          {
+            "kind": "function",
+            "name": "getCsrfToken",
+            "parent": "",
+            "signature": "function getCsrfToken()"
+          },
+          {
+            "kind": "function",
+            "name": "setCsrfToken",
+            "parent": "",
+            "signature": "function setCsrfToken(token)"
+          },
+          {
+            "kind": "function",
+            "name": "handleSessionExpired",
+            "parent": "",
+            "signature": "function handleSessionExpired(setupRequired)"
+          },
+          {
+            "kind": "function",
+            "name": "apiFetch",
+            "parent": "",
+            "signature": "async function apiFetch(url, options ="
+          },
+          {
+            "kind": "function",
+            "name": "openTab",
+            "parent": "",
+            "signature": "function openTab(tabName)"
+          },
+          {
+            "kind": "function",
+            "name": "showNotification",
+            "parent": "",
+            "signature": "function showNotification(message, type = 'success')"
+          },
+          {
+            "kind": "function",
+            "name": "loadSettings",
+            "parent": "",
+            "signature": "async function loadSettings()"
+          },
+          {
+            "kind": "function",
+            "name": "parseCronToUI",
+            "parent": "",
+            "signature": "function parseCronToUI(cron)"
+          },
+          {
+            "kind": "function",
+            "name": "updateScheduleUI",
+            "parent": "",
+            "signature": "function updateScheduleUI()"
+          },
+          {
+            "kind": "function",
+            "name": "generateCronFromUI",
+            "parent": "",
+            "signature": "function generateCronFromUI()"
+          },
+          {
+            "kind": "function",
+            "name": "updateCronPreview",
+            "parent": "",
+            "signature": "function updateCronPreview()"
+          },
+          {
+            "kind": "function",
+            "name": "toggleSSHFileOverrides",
+            "parent": "",
+            "signature": "function toggleSSHFileOverrides()"
+          },
+          {
+            "kind": "function",
+            "name": "resetSSHFileOverrides",
+            "parent": "",
+            "signature": "function resetSSHFileOverrides()"
+          },
+          {
+            "kind": "function",
+            "name": "editDomain",
+            "parent": "",
+            "signature": "function editDomain(domain)"
+          },
+          {
+            "kind": "function",
+            "name": "cancelEditDomain",
+            "parent": "",
+            "signature": "function cancelEditDomain()"
+          },
+          {
+            "kind": "function",
+            "name": "loadDomains",
+            "parent": "",
+            "signature": "async function loadDomains()"
+          },
+          {
+            "kind": "function",
+            "name": "removeDomain",
+            "parent": "",
+            "signature": "async function removeDomain(domain)"
+          },
+          {
+            "kind": "function",
+            "name": "triggerSync",
+            "parent": "",
+            "signature": "async function triggerSync()"
+          },
+          {
+            "kind": "function",
+            "name": "loadSyncStatus",
+            "parent": "",
+            "signature": "async function loadSyncStatus()"
+          },
+          {
+            "kind": "function",
+            "name": "stopSyncPolling",
+            "parent": "",
+            "signature": "function stopSyncPolling()"
+          },
+          {
+            "kind": "function",
+            "name": "loadSSHHosts",
+            "parent": "",
+            "signature": "async function loadSSHHosts()"
+          },
+          {
+            "kind": "function",
+            "name": "createSSHHostCard",
+            "parent": "",
+            "signature": "function createSSHHostCard(host)"
+          },
+          {
+            "kind": "function",
+            "name": "toggleCard",
+            "parent": "",
+            "signature": "function toggleCard(card)"
+          },
+          {
+            "kind": "function",
+            "name": "editSSHHost",
+            "parent": "",
+            "signature": "async function editSSHHost(displayName)"
+          },
+          {
+            "kind": "function",
+            "name": "cancelEditSSHHost",
+            "parent": "",
+            "signature": "function cancelEditSSHHost()"
+          },
+          {
+            "kind": "function",
+            "name": "deleteSSHHost",
+            "parent": "",
+            "signature": "async function deleteSSHHost(displayName)"
+          },
+          {
+            "kind": "function",
+            "name": "loadDistributionLogs",
+            "parent": "",
+            "signature": "async function loadDistributionLogs()"
+          },
+          {
+            "kind": "function",
+            "name": "createLogEntry",
+            "parent": "",
+            "signature": "function createLogEntry(log)"
+          },
+          {
+            "kind": "function",
+            "name": "getEventIcon",
+            "parent": "",
+            "signature": "function getEventIcon(eventType)"
+          },
+          {
+            "kind": "function",
+            "name": "getStatusBadge",
+            "parent": "",
+            "signature": "function getStatusBadge(status)"
+          },
+          {
+            "kind": "function",
+            "name": "formatEventType",
+            "parent": "",
+            "signature": "function formatEventType(eventType)"
+          }
+        ]
+      },
+      {
+        "path": "app/static/js/security.js",
+        "symbols": [
+          {
+            "kind": "function",
+            "name": "setStatusIndicator",
+            "parent": "",
+            "signature": "function setStatusIndicator(elementId, glyph, html, modifier)"
+          },
+          {
+            "kind": "function",
+            "name": "show",
+            "parent": "",
+            "signature": "function show(elementId, visible)"
+          },
+          {
+            "kind": "function",
+            "name": "formatTimestamp",
+            "parent": "",
+            "signature": "function formatTimestamp(value)"
+          },
+          {
+            "kind": "function",
+            "name": "loadSecurityTab",
+            "parent": "",
+            "signature": "async function loadSecurityTab()"
+          },
+          {
+            "kind": "function",
+            "name": "renderSecurityTab",
+            "parent": "",
+            "signature": "function renderSecurityTab()"
+          },
+          {
+            "kind": "function",
+            "name": "displayRecoveryCodes",
+            "parent": "",
+            "signature": "function displayRecoveryCodes(codes)"
+          },
+          {
+            "kind": "function",
+            "name": "postJson",
+            "parent": "",
+            "signature": "async function postJson(url, body)"
+          },
+          {
+            "kind": "function",
+            "name": "changePassword",
+            "parent": "",
+            "signature": "async function changePassword(event)"
+          },
+          {
+            "kind": "function",
+            "name": "beginTotpEnrolment",
+            "parent": "",
+            "signature": "async function beginTotpEnrolment(event)"
+          },
+          {
+            "kind": "function",
+            "name": "confirmTotpEnrolment",
+            "parent": "",
+            "signature": "async function confirmTotpEnrolment(event)"
+          },
+          {
+            "kind": "function",
+            "name": "cancelTotpEnrolment",
+            "parent": "",
+            "signature": "function cancelTotpEnrolment()"
+          },
+          {
+            "kind": "function",
+            "name": "disableTotp",
+            "parent": "",
+            "signature": "async function disableTotp(event)"
+          },
+          {
+            "kind": "function",
+            "name": "regenerateRecoveryCodes",
+            "parent": "",
+            "signature": "async function regenerateRecoveryCodes(event)"
+          },
+          {
+            "kind": "function",
+            "name": "copyRecoveryCodes",
+            "parent": "",
+            "signature": "function copyRecoveryCodes()"
+          },
+          {
+            "kind": "function",
+            "name": "downloadRecoveryCodes",
+            "parent": "",
+            "signature": "function downloadRecoveryCodes()"
+          }
+        ]
+      },
+      {
+        "path": "app/static/js/theme.js",
+        "symbols": [
+          {
+            "kind": "function",
+            "name": "toggleDarkMode",
+            "parent": "",
+            "signature": "function toggleDarkMode()"
+          }
+        ]
+      },
+      {
+        "path": "app/sync.py",
+        "symbols": [
+          {
+            "kind": "class",
+            "name": "CertificateSync",
+            "parent": "",
+            "signature": "class CertificateSync"
+          },
+          {
+            "kind": "function",
+            "name": "sync_all",
+            "parent": "CertificateSync",
+            "signature": "sync_all(self) -> Dict"
+          },
+          {
+            "kind": "function",
+            "name": "start_scheduler",
+            "parent": "CertificateSync",
+            "signature": "start_scheduler(self)"
+          },
+          {
+            "kind": "function",
+            "name": "stop_scheduler",
+            "parent": "CertificateSync",
+            "signature": "stop_scheduler(self)"
+          },
+          {
+            "kind": "function",
+            "name": "get_status",
+            "parent": "CertificateSync",
+            "signature": "get_status(self) -> Dict"
+          },
+          {
+            "kind": "function",
+            "name": "distribute_certificates",
+            "parent": "CertificateSync",
+            "signature": "distribute_certificates(self, certificate_files: List[str]) -> List[Dict]"
+          }
+        ]
+      },
+      {
+        "path": "contrib/synology-dsm-install.sh",
+        "symbols": [
+          {
+            "kind": "function",
+            "name": "log",
+            "parent": "",
+            "signature": "log()"
+          },
+          {
+            "kind": "function",
+            "name": "die",
+            "parent": "",
+            "signature": "die()"
+          },
+          {
+            "kind": "function",
+            "name": "cleanup",
+            "parent": "",
+            "signature": "cleanup()"
+          },
+          {
+            "kind": "function",
+            "name": "usage",
+            "parent": "",
+            "signature": "usage()"
+          },
+          {
+            "kind": "function",
+            "name": "json_field",
+            "parent": "",
+            "signature": "json_field()"
+          },
+          {
+            "kind": "function",
+            "name": "api_login",
+            "parent": "",
+            "signature": "api_login()"
+          },
+          {
+            "kind": "function",
+            "name": "api_logout",
+            "parent": "",
+            "signature": "api_logout()"
+          },
+          {
+            "kind": "function",
+            "name": "api_cert_list",
+            "parent": "",
+            "signature": "api_cert_list()"
+          },
+          {
+            "kind": "function",
+            "name": "cert_record",
+            "parent": "",
+            "signature": "cert_record()"
+          },
+          {
+            "kind": "function",
+            "name": "extract_leaf",
+            "parent": "",
+            "signature": "extract_leaf()"
+          },
+          {
+            "kind": "function",
+            "name": "cert_enddate",
+            "parent": "",
+            "signature": "cert_enddate()"
+          },
+          {
+            "kind": "function",
+            "name": "preflight",
+            "parent": "",
+            "signature": "preflight()"
+          },
+          {
+            "kind": "function",
+            "name": "process_domain",
+            "parent": "",
+            "signature": "process_domain()"
+          }
+        ]
+      }
+    ]
+  },
+  "tests": [
+    "tests/conftest.py",
+    "tests/test_auth_gate.py",
+    "tests/test_config_schema.py",
+    "tests/test_csrf.py",
+    "tests/test_hardening.py",
+    "tests/test_lockout.py",
+    "tests/test_login.py",
+    "tests/test_setup.py",
+    "tests/test_totp.py"
+  ],
+  "operations": [
+    ".github/workflows/docker-publish.yml",
+    "Dockerfile",
+    "config.example.yaml",
+    "docker-compose.yml"
+  ],
+  "limitations": {
+    "unparsed_languages": [
+      "Shell"
+    ],
+    "excluded_dirs": [],
+    "code_map_truncated": false,
+    "code_map_symbols_capped": true,
+    "tracked_files_only": true
+  },
+  "generated": {
+    "source_commit": "578fc234926554dfc80399c0704494e6709533b2",
+    "content_hash": "c2208ebba626e7c9",
+    "generator": "navgen"
+  }
+}
