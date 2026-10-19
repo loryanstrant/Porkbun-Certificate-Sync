@@ -15,7 +15,7 @@
   },
   "start_here": {
     "readme": "README.md",
-    "agents_md": null,
+    "agents_md": "AGENTS.md",
     "entry_points": [
       "app/main.py"
     ],
@@ -1706,8 +1706,8 @@
     "tracked_files_only": true
   },
   "generated": {
-    "source_commit": "578fc234926554dfc80399c0704494e6709533b2",
-    "content_hash": "c2208ebba626e7c9",
+    "source_commit": "9d66d1c32a26a2de05b92c02ea67acdb2269c1cd",
+    "content_hash": "b14b91e617a19037",
     "generator": "navgen"
   }
 }
